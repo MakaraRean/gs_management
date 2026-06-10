@@ -1,7 +1,7 @@
 /.phpunit.cache
 /bootstrap/ssr
 /node_modules
-/public/build
+# /public/build — committed to git for shared hosting deployment (no Node.js on server)
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
