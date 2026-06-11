@@ -1,6 +1,7 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/hooks/use-locale';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,6 +38,7 @@ type FuelTypesProps = {
 };
 
 export default function FuelTypes({ fuelTypes }: FuelTypesProps) {
+    const { t } = useLocale();
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<FuelType | null>(null);
 
@@ -76,7 +78,7 @@ export default function FuelTypes({ fuelTypes }: FuelTypesProps) {
     };
 
     const remove = (fuelType: FuelType) => {
-        if (confirm(`Delete ${fuelType.name}?`)) {
+        if (confirm(`${t('common.delete')} ${fuelType.name}?`)) {
             router.delete(destroy({ fuelType: fuelType.id }).url, {
                 preserveScroll: true,
             });
@@ -85,27 +87,27 @@ export default function FuelTypes({ fuelTypes }: FuelTypesProps) {
 
     return (
         <>
-            <Head title="Fuel types" />
+            <Head title={t('fuel.types_title')} />
 
             <div className="space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-lg font-medium">Fuel Types</h2>
+                    <h2 className="text-lg font-medium">{t('fuel.types_title')}</h2>
                     <Button size="sm" onClick={openCreate}>
                         <Plus className="h-4 w-4" />
-                        Add
+                        {t('common.add')}
                     </Button>
                 </div>
 
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Name</TableHead>
+                            <TableHead>{t('common.name')}</TableHead>
                             <TableHead className="text-right">
-                                Price / unit
+                                {t('fuel.price_per_unit')}
                             </TableHead>
-                            <TableHead className="text-right">Tanks</TableHead>
+                            <TableHead className="text-right">{t('fuel.tanks_title')}</TableHead>
                             <TableHead className="text-right">
-                                Actions
+                                {t('common.actions')}
                             </TableHead>
                         </TableRow>
                     </TableHeader>
@@ -116,7 +118,7 @@ export default function FuelTypes({ fuelTypes }: FuelTypesProps) {
                                     colSpan={4}
                                     className="text-center text-muted-foreground"
                                 >
-                                    No fuel types yet.
+                                    {t('fuel.no_types')}
                                 </TableCell>
                             </TableRow>
                         )}
@@ -167,12 +169,12 @@ export default function FuelTypes({ fuelTypes }: FuelTypesProps) {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            {editing ? 'Edit fuel type' : 'New fuel type'}
+                            {editing ? t('fuel.edit_fuel_type') : t('fuel.new_fuel_type')}
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Name</Label>
+                            <Label htmlFor="name">{t('common.name')}</Label>
                             <Input
                                 id="name"
                                 value={data.name}
@@ -185,7 +187,7 @@ export default function FuelTypes({ fuelTypes }: FuelTypesProps) {
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="grid gap-2">
-                                <Label htmlFor="unit_price">Price / unit</Label>
+                                <Label htmlFor="unit_price">{t('fuel.price_per_unit')}</Label>
                                 <Input
                                     id="unit_price"
                                     type="number"
@@ -204,7 +206,7 @@ export default function FuelTypes({ fuelTypes }: FuelTypesProps) {
                                 <InputError message={errors.unit_price} />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="unit">Unit</Label>
+                                <Label htmlFor="unit">{t('fuel.unit')}</Label>
                                 <Input
                                     id="unit"
                                     value={data.unit}
@@ -217,7 +219,7 @@ export default function FuelTypes({ fuelTypes }: FuelTypesProps) {
                             </div>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="color">Color</Label>
+                            <Label htmlFor="color">{t('fuel.color')}</Label>
                             <Input
                                 id="color"
                                 type="color"
@@ -231,7 +233,7 @@ export default function FuelTypes({ fuelTypes }: FuelTypesProps) {
                         </div>
                         <DialogFooter>
                             <Button type="submit" disabled={processing}>
-                                {editing ? 'Save changes' : 'Create'}
+                                {editing ? t('common.save_changes') : t('common.create')}
                             </Button>
                         </DialogFooter>
                     </form>

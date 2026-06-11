@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { Download, Printer } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/hooks/use-locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -37,12 +38,6 @@ type ReportsProps = {
     report: Report;
 };
 
-const REPORT_TYPES = [
-    { value: 'daily_sales', label: 'Daily sales' },
-    { value: 'inventory', label: 'Fuel inventory' },
-    { value: 'cash_flow', label: 'Cash flow statement' },
-];
-
 function downloadCsv(report: Report): void {
     const header = report.columns.map((column) => column.label);
     const lines = report.rows.map((row) =>
@@ -69,9 +64,16 @@ function downloadCsv(report: Report): void {
 }
 
 export default function Reports({ type, filters, report }: ReportsProps) {
+    const { t } = useLocale();
     const [reportType, setReportType] = useState(type);
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
+
+    const REPORT_TYPES = [
+        { value: 'daily_sales', label: t('reports.daily_sales') },
+        { value: 'inventory', label: t('reports.fuel_inventory') },
+        { value: 'cash_flow', label: t('reports.cash_flow_statement') },
+    ];
 
     const generate = () => {
         router.get(
@@ -83,15 +85,15 @@ export default function Reports({ type, filters, report }: ReportsProps) {
 
     return (
         <>
-            <Head title="Reports" />
+            <Head title={t('reports.title')} />
 
             <div className="flex flex-1 flex-col gap-4 p-4">
-                <h1 className="text-xl font-semibold">Reports</h1>
+                <h1 className="text-xl font-semibold">{t('reports.title')}</h1>
 
                 <Card className="print:hidden">
                     <CardContent className="flex flex-col gap-3 pt-6 lg:flex-row lg:items-end">
                         <div className="grid flex-1 gap-1.5">
-                            <Label htmlFor="type">Report</Label>
+                            <Label htmlFor="type">{t('reports.report')}</Label>
                             <Select
                                 value={reportType}
                                 onValueChange={setReportType}
@@ -112,7 +114,7 @@ export default function Reports({ type, filters, report }: ReportsProps) {
                             </Select>
                         </div>
                         <div className="grid flex-1 gap-1.5">
-                            <Label htmlFor="from">From</Label>
+                            <Label htmlFor="from">{t('common.from')}</Label>
                             <Input
                                 id="from"
                                 type="date"
@@ -124,7 +126,7 @@ export default function Reports({ type, filters, report }: ReportsProps) {
                             />
                         </div>
                         <div className="grid flex-1 gap-1.5">
-                            <Label htmlFor="to">To</Label>
+                            <Label htmlFor="to">{t('common.to')}</Label>
                             <Input
                                 id="to"
                                 type="date"
@@ -134,7 +136,7 @@ export default function Reports({ type, filters, report }: ReportsProps) {
                             />
                         </div>
                         <Button onClick={generate} className="w-full lg:w-auto">
-                            Generate
+                            {t('reports.generate')}
                         </Button>
                     </CardContent>
                 </Card>
@@ -157,7 +159,7 @@ export default function Reports({ type, filters, report }: ReportsProps) {
                                 onClick={() => window.print()}
                             >
                                 <Printer className="h-4 w-4" />
-                                Print
+                                {t('reports.print')}
                             </Button>
                         </div>
                     </CardHeader>
@@ -179,7 +181,7 @@ export default function Reports({ type, filters, report }: ReportsProps) {
                                             colSpan={report.columns.length}
                                             className="text-center text-muted-foreground"
                                         >
-                                            No data for this report.
+                                            {t('reports.no_data')}
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -222,5 +224,5 @@ export default function Reports({ type, filters, report }: ReportsProps) {
 }
 
 Reports.layout = {
-    breadcrumbs: [{ title: 'Reports', href: index() }],
+    breadcrumbs: [{ title: 'reports.title', href: index() }],
 };

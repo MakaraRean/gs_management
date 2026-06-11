@@ -7,6 +7,7 @@ import {
     Wallet,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/hooks/use-locale';
 import InputError from '@/components/input-error';
 import { StatCard } from '@/components/stat-card';
 import { Badge } from '@/components/ui/badge';
@@ -55,16 +56,8 @@ type CashFlowProps = {
     filters: { from: string; to: string };
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-    sale: 'Cash sale',
-    fuel_purchase: 'Fuel purchase',
-    expense: 'Expense',
-    other_income: 'Other income',
-    withdrawal: 'Withdrawal',
-    deposit: 'Deposit',
-};
-
 export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
+    const { t } = useLocale();
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
     const [open, setOpen] = useState(false);
@@ -76,6 +69,15 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
         description: '',
         occurred_at: '',
     });
+
+    const CATEGORY_LABELS: Record<string, string> = {
+        sale: t('cash_flow.category_sale'),
+        fuel_purchase: t('cash_flow.category_fuel_purchase'),
+        expense: t('cash_flow.category_expense'),
+        other_income: t('cash_flow.category_other_income'),
+        withdrawal: t('cash_flow.category_withdrawal'),
+        deposit: t('cash_flow.category_deposit'),
+    };
 
     const applyFilters = () => {
         router.get(
@@ -96,7 +98,7 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
     };
 
     const remove = (entry: LedgerEntry) => {
-        if (entry.is_manual && confirm('Delete this entry?')) {
+        if (entry.is_manual && confirm(t('cash_flow.delete_confirm'))) {
             router.delete(destroy({ cashFlow: Number(entry.id) }).url, {
                 preserveScroll: true,
             });
@@ -105,33 +107,33 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
 
     return (
         <>
-            <Head title="Cash flow" />
+            <Head title={t('cash_flow.title')} />
 
             <div className="flex flex-1 flex-col gap-4 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h1 className="text-xl font-semibold">Cash Flow</h1>
+                    <h1 className="text-xl font-semibold">{t('cash_flow.title')}</h1>
                     <Button
                         onClick={() => setOpen(true)}
                         className="w-full sm:w-auto"
                     >
                         <Plus className="h-4 w-4" />
-                        Add entry
+                        {t('cash_flow.add_entry')}
                     </Button>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <StatCard
-                        title="Cash in"
+                        title={t('cash_flow.cash_in')}
                         value={formatCurrency(summary.total_in)}
                         icon={ArrowUpCircle}
                     />
                     <StatCard
-                        title="Cash out"
+                        title={t('cash_flow.cash_out')}
                         value={formatCurrency(summary.total_out)}
                         icon={ArrowDownCircle}
                     />
                     <StatCard
-                        title="Net"
+                        title={t('cash_flow.net')}
                         value={formatCurrency(summary.net)}
                         icon={Wallet}
                     />
@@ -140,7 +142,7 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                 <Card>
                     <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-end">
                         <div className="grid flex-1 gap-1.5">
-                            <Label htmlFor="from">From</Label>
+                            <Label htmlFor="from">{t('common.from')}</Label>
                             <Input
                                 id="from"
                                 type="date"
@@ -151,7 +153,7 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                             />
                         </div>
                         <div className="grid flex-1 gap-1.5">
-                            <Label htmlFor="to">To</Label>
+                            <Label htmlFor="to">{t('common.to')}</Label>
                             <Input
                                 id="to"
                                 type="date"
@@ -163,7 +165,7 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                             onClick={applyFilters}
                             className="w-full sm:w-auto"
                         >
-                            Apply
+                            {t('common.apply')}
                         </Button>
                     </CardContent>
                 </Card>
@@ -173,14 +175,14 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Description</TableHead>
-                                    <TableHead>Category</TableHead>
+                                    <TableHead>{t('common.date')}</TableHead>
+                                    <TableHead>{t('common.description')}</TableHead>
+                                    <TableHead>{t('cash_flow.category')}</TableHead>
                                     <TableHead className="text-right">
-                                        Amount
+                                        {t('common.amount')}
                                     </TableHead>
                                     <TableHead className="text-right">
-                                        Actions
+                                        {t('common.actions')}
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -191,7 +193,7 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                                             colSpan={5}
                                             className="text-center text-muted-foreground"
                                         >
-                                            No entries in this period.
+                                            {t('cash_flow.no_entries')}
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -236,7 +238,7 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                                                 </Button>
                                             ) : (
                                                 <span className="text-xs text-muted-foreground">
-                                                    auto
+                                                    {t('common.auto')}
                                                 </span>
                                             )}
                                         </TableCell>
@@ -251,12 +253,12 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add cash entry</DialogTitle>
+                        <DialogTitle>{t('cash_flow.add_entry')}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="grid gap-2">
-                                <Label htmlFor="direction">Direction</Label>
+                                <Label htmlFor="direction">{t('cash_flow.direction')}</Label>
                                 <Select
                                     value={data.direction}
                                     onValueChange={(value) =>
@@ -271,17 +273,17 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="in">
-                                            Cash in
+                                            {t('cash_flow.cash_in')}
                                         </SelectItem>
                                         <SelectItem value="out">
-                                            Cash out
+                                            {t('cash_flow.cash_out')}
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.direction} />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="category">Category</Label>
+                                <Label htmlFor="category">{t('cash_flow.category')}</Label>
                                 <Select
                                     value={data.category}
                                     onValueChange={(value) =>
@@ -296,16 +298,16 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="expense">
-                                            Expense
+                                            {t('cash_flow.category_expense')}
                                         </SelectItem>
                                         <SelectItem value="other_income">
-                                            Other income
+                                            {t('cash_flow.category_other_income')}
                                         </SelectItem>
                                         <SelectItem value="withdrawal">
-                                            Withdrawal
+                                            {t('cash_flow.category_withdrawal')}
                                         </SelectItem>
                                         <SelectItem value="deposit">
-                                            Deposit
+                                            {t('cash_flow.category_deposit')}
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
@@ -313,7 +315,7 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                             </div>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="amount">Amount</Label>
+                            <Label htmlFor="amount">{t('common.amount')}</Label>
                             <Input
                                 id="amount"
                                 type="number"
@@ -328,7 +330,7 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                             <InputError message={errors.amount} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">{t('common.description')}</Label>
                             <Input
                                 id="description"
                                 value={data.description}
@@ -339,7 +341,7 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                             <InputError message={errors.description} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="occurred_at">Date</Label>
+                            <Label htmlFor="occurred_at">{t('common.date')}</Label>
                             <Input
                                 id="occurred_at"
                                 type="date"
@@ -352,7 +354,7 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                         </div>
                         <DialogFooter>
                             <Button type="submit" disabled={processing}>
-                                Save entry
+                                {t('common.save')}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -363,5 +365,5 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
 }
 
 CashFlow.layout = {
-    breadcrumbs: [{ title: 'Cash Flow', href: index() }],
+    breadcrumbs: [{ title: 'cash_flow.title', href: index() }],
 };

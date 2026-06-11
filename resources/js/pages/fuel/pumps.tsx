@@ -1,6 +1,7 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/hooks/use-locale';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,7 @@ type PumpsProps = {
 };
 
 export default function Pumps({ pumps, tanks }: PumpsProps) {
+    const { t } = useLocale();
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<Pump | null>(null);
 
@@ -90,7 +92,7 @@ export default function Pumps({ pumps, tanks }: PumpsProps) {
     };
 
     const remove = (pump: Pump) => {
-        if (confirm(`Delete ${pump.name}?`)) {
+        if (confirm(`${t('common.delete')} ${pump.name}?`)) {
             router.delete(destroy({ pump: pump.id }).url, {
                 preserveScroll: true,
             });
@@ -99,26 +101,26 @@ export default function Pumps({ pumps, tanks }: PumpsProps) {
 
     return (
         <>
-            <Head title="Pumps" />
+            <Head title={t('fuel.pumps_title')} />
 
             <div className="space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-lg font-medium">Pumps</h2>
+                    <h2 className="text-lg font-medium">{t('fuel.pumps_title')}</h2>
                     <Button size="sm" onClick={openCreate}>
                         <Plus className="h-4 w-4" />
-                        Add
+                        {t('common.add')}
                     </Button>
                 </div>
 
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Tank</TableHead>
-                            <TableHead>Fuel</TableHead>
-                            <TableHead>Status</TableHead>
+                            <TableHead>{t('common.name')}</TableHead>
+                            <TableHead>{t('fuel.tank')}</TableHead>
+                            <TableHead>{t('common.fuel')}</TableHead>
+                            <TableHead>{t('common.status')}</TableHead>
                             <TableHead className="text-right">
-                                Actions
+                                {t('common.actions')}
                             </TableHead>
                         </TableRow>
                     </TableHeader>
@@ -129,7 +131,7 @@ export default function Pumps({ pumps, tanks }: PumpsProps) {
                                     colSpan={5}
                                     className="text-center text-muted-foreground"
                                 >
-                                    No pumps yet.
+                                    {t('fuel.no_pumps')}
                                 </TableCell>
                             </TableRow>
                         )}
@@ -150,7 +152,7 @@ export default function Pumps({ pumps, tanks }: PumpsProps) {
                                                 : 'secondary'
                                         }
                                     >
-                                        {pump.status}
+                                        {pump.status === 'active' ? t('common.active') : t('common.inactive')}
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
@@ -180,12 +182,12 @@ export default function Pumps({ pumps, tanks }: PumpsProps) {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            {editing ? 'Edit pump' : 'New pump'}
+                            {editing ? t('fuel.edit_pump') : t('fuel.new_pump')}
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Name</Label>
+                            <Label htmlFor="name">{t('common.name')}</Label>
                             <Input
                                 id="name"
                                 value={data.name}
@@ -197,7 +199,7 @@ export default function Pumps({ pumps, tanks }: PumpsProps) {
                             <InputError message={errors.name} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="tank_id">Tank</Label>
+                            <Label htmlFor="tank_id">{t('fuel.tank')}</Label>
                             <Select
                                 value={data.tank_id}
                                 onValueChange={(value) =>
@@ -205,7 +207,7 @@ export default function Pumps({ pumps, tanks }: PumpsProps) {
                                 }
                             >
                                 <SelectTrigger id="tank_id" className="w-full">
-                                    <SelectValue placeholder="Select tank" />
+                                    <SelectValue placeholder={t('common.select_tank')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {tanks.map((tank) => (
@@ -224,7 +226,7 @@ export default function Pumps({ pumps, tanks }: PumpsProps) {
                             <InputError message={errors.tank_id} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="status">Status</Label>
+                            <Label htmlFor="status">{t('common.status')}</Label>
                             <Select
                                 value={data.status}
                                 onValueChange={(value) =>
@@ -236,10 +238,10 @@ export default function Pumps({ pumps, tanks }: PumpsProps) {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="active">
-                                        Active
+                                        {t('common.active')}
                                     </SelectItem>
                                     <SelectItem value="inactive">
-                                        Inactive
+                                        {t('common.inactive')}
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
@@ -247,7 +249,7 @@ export default function Pumps({ pumps, tanks }: PumpsProps) {
                         </div>
                         <DialogFooter>
                             <Button type="submit" disabled={processing}>
-                                {editing ? 'Save changes' : 'Create'}
+                                {editing ? t('common.save_changes') : t('common.create')}
                             </Button>
                         </DialogFooter>
                     </form>

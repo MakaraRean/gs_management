@@ -15,6 +15,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { useLocale } from '@/hooks/use-locale';
 import { StatCard } from '@/components/stat-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,6 +58,7 @@ export default function Analytics({
     byPayment,
     totals,
 }: AnalyticsProps) {
+    const { t } = useLocale();
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
 
@@ -70,13 +72,13 @@ export default function Analytics({
 
     return (
         <>
-            <Head title="Sales analysis" />
+            <Head title={t('analytics.title')} />
 
             <div className="flex flex-1 flex-col gap-4 p-4">
                 <Card>
                     <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-end">
                         <div className="grid flex-1 gap-1.5">
-                            <Label htmlFor="from">From</Label>
+                            <Label htmlFor="from">{t('common.from')}</Label>
                             <Input
                                 id="from"
                                 type="date"
@@ -87,7 +89,7 @@ export default function Analytics({
                             />
                         </div>
                         <div className="grid flex-1 gap-1.5">
-                            <Label htmlFor="to">To</Label>
+                            <Label htmlFor="to">{t('common.to')}</Label>
                             <Input
                                 id="to"
                                 type="date"
@@ -99,29 +101,29 @@ export default function Analytics({
                             onClick={applyFilters}
                             className="w-full sm:w-auto"
                         >
-                            Apply
+                            {t('common.apply')}
                         </Button>
                     </CardContent>
                 </Card>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <StatCard
-                        title="Revenue"
+                        title={t('analytics.revenue')}
                         value={formatCurrency(totals.revenue)}
                         icon={DollarSign}
                     />
                     <StatCard
-                        title="Volume"
+                        title={t('analytics.volume')}
                         value={formatVolume(totals.volume)}
                         icon={Droplets}
                     />
                     <StatCard
-                        title="Transactions"
+                        title={t('analytics.transactions')}
                         value={formatNumber(totals.transactions)}
                         icon={Receipt}
                     />
                     <StatCard
-                        title="Avg. ticket"
+                        title={t('analytics.avg_ticket')}
                         value={formatCurrency(totals.average_ticket)}
                         icon={TrendingUp}
                     />
@@ -129,7 +131,7 @@ export default function Analytics({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Revenue & volume over time</CardTitle>
+                        <CardTitle>{t('analytics.revenue_volume_over_time')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="h-72 w-full">
@@ -188,7 +190,7 @@ export default function Analytics({
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Revenue by fuel type</CardTitle>
+                            <CardTitle>{t('analytics.revenue_by_fuel_type')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="h-64 w-full">
@@ -236,7 +238,7 @@ export default function Analytics({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Revenue by payment method</CardTitle>
+                            <CardTitle>{t('analytics.revenue_by_payment')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="h-64 w-full">
@@ -277,7 +279,7 @@ export default function Analytics({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Revenue by pump</CardTitle>
+                        <CardTitle>{t('analytics.revenue_by_pump')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="h-64 w-full">
@@ -324,5 +326,5 @@ export default function Analytics({
 }
 
 Analytics.layout = {
-    breadcrumbs: [{ title: 'Sales Analysis', href: index() }],
+    breadcrumbs: [{ title: 'analytics.title', href: index() }],
 };

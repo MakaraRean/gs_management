@@ -1,6 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useLocale } from '@/hooks/use-locale';
 import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
@@ -15,6 +16,7 @@ export type Props = {
 };
 
 export default function ManageTwoFactor(props: Props) {
+    const { t } = useLocale();
     const requiresConfirmation = props.requiresConfirmation ?? false;
     const twoFactorEnabled = props.twoFactorEnabled ?? false;
 
@@ -48,15 +50,13 @@ export default function ManageTwoFactor(props: Props) {
         <div className="space-y-6">
             <Heading
                 variant="small"
-                title="Two-factor authentication"
-                description="Manage your two-factor authentication settings"
+                title={t('two_factor.title')}
+                description={t('two_factor.description')}
             />
             {twoFactorEnabled ? (
                 <div className="flex flex-col items-start justify-start space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        You will be prompted for a secure, random pin during
-                        login, which you can retrieve from the TOTP-supported
-                        application on your phone.
+                        {t('two_factor.enabled_hint')}
                     </p>
 
                     <div className="relative inline">
@@ -67,7 +67,7 @@ export default function ManageTwoFactor(props: Props) {
                                     type="submit"
                                     disabled={processing}
                                 >
-                                    Disable 2FA
+                                    {t('two_factor.disable')}
                                 </Button>
                             )}
                         </Form>
@@ -82,17 +82,14 @@ export default function ManageTwoFactor(props: Props) {
             ) : (
                 <div className="flex flex-col items-start justify-start space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        When you enable two-factor authentication, you will be
-                        prompted for a secure pin during login. This pin can be
-                        retrieved from a TOTP-supported application on your
-                        phone.
+                        {t('two_factor.disabled_hint')}
                     </p>
 
                     <div>
                         {hasSetupData ? (
                             <Button onClick={() => setShowSetupModal(true)}>
                                 <ShieldCheck />
-                                Continue setup
+                                {t('two_factor.continue_setup')}
                             </Button>
                         ) : (
                             <Form
@@ -101,7 +98,7 @@ export default function ManageTwoFactor(props: Props) {
                             >
                                 {({ processing }) => (
                                     <Button type="submit" disabled={processing}>
-                                        Enable 2FA
+                                        {t('two_factor.enable')}
                                     </Button>
                                 )}
                             </Form>

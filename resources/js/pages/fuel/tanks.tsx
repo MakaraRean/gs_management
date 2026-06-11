@@ -1,6 +1,7 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/hooks/use-locale';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,6 +56,7 @@ function barColor(fill: number): string {
 }
 
 export default function Tanks({ tanks, fuelTypes }: TanksProps) {
+    const { t } = useLocale();
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<Tank | null>(null);
 
@@ -94,7 +96,7 @@ export default function Tanks({ tanks, fuelTypes }: TanksProps) {
     };
 
     const remove = (tank: Tank) => {
-        if (confirm(`Delete ${tank.name}?`)) {
+        if (confirm(`${t('common.delete')} ${tank.name}?`)) {
             router.delete(destroy({ tank: tank.id }).url, {
                 preserveScroll: true,
             });
@@ -103,21 +105,21 @@ export default function Tanks({ tanks, fuelTypes }: TanksProps) {
 
     return (
         <>
-            <Head title="Tanks" />
+            <Head title={t('fuel.tanks_title')} />
 
             <div className="space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-lg font-medium">Tanks</h2>
+                    <h2 className="text-lg font-medium">{t('fuel.tanks_title')}</h2>
                     <Button size="sm" onClick={openCreate}>
                         <Plus className="h-4 w-4" />
-                        Add
+                        {t('common.add')}
                     </Button>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {tanks.length === 0 && (
                         <p className="text-sm text-muted-foreground">
-                            No tanks yet.
+                            {t('fuel.no_tanks')}
                         </p>
                     )}
                     {tanks.map((tank) => (
@@ -130,8 +132,9 @@ export default function Tanks({ tanks, fuelTypes }: TanksProps) {
                                         </p>
                                         <p className="text-sm text-muted-foreground">
                                             {tank.fuel_type?.name ?? '—'} ·{' '}
-                                            {tank.pumps_count} pump
-                                            {tank.pumps_count === 1 ? '' : 's'}
+                                            {tank.pumps_count === 1
+                                                ? t('fuel.pumps_count_one')
+                                                : t('fuel.pumps_count_other', { count: String(tank.pumps_count) })}
                                         </p>
                                     </div>
                                     <div className="flex shrink-0">
@@ -178,7 +181,7 @@ export default function Tanks({ tanks, fuelTypes }: TanksProps) {
                                         )}
                                     </span>
                                     {tank.fill_percentage <= 15 ? (
-                                        <Badge variant="destructive">Low</Badge>
+                                        <Badge variant="destructive">{t('common.low')}</Badge>
                                     ) : (
                                         <span className="tabular-nums">
                                             {tank.fill_percentage}%
@@ -195,12 +198,12 @@ export default function Tanks({ tanks, fuelTypes }: TanksProps) {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            {editing ? 'Edit tank' : 'New tank'}
+                            {editing ? t('fuel.edit_tank') : t('fuel.new_tank')}
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Name</Label>
+                            <Label htmlFor="name">{t('common.name')}</Label>
                             <Input
                                 id="name"
                                 value={data.name}
@@ -212,7 +215,7 @@ export default function Tanks({ tanks, fuelTypes }: TanksProps) {
                             <InputError message={errors.name} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="fuel_type_id">Fuel type</Label>
+                            <Label htmlFor="fuel_type_id">{t('fuel.fuel_type')}</Label>
                             <Select
                                 value={data.fuel_type_id}
                                 onValueChange={(value) =>
@@ -223,7 +226,7 @@ export default function Tanks({ tanks, fuelTypes }: TanksProps) {
                                     id="fuel_type_id"
                                     className="w-full"
                                 >
-                                    <SelectValue placeholder="Select fuel type" />
+                                    <SelectValue placeholder={t('common.select_fuel_type')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {fuelTypes.map((fuelType) => (
@@ -240,7 +243,7 @@ export default function Tanks({ tanks, fuelTypes }: TanksProps) {
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="grid gap-2">
-                                <Label htmlFor="capacity">Capacity</Label>
+                                <Label htmlFor="capacity">{t('fuel.capacity')}</Label>
                                 <Input
                                     id="capacity"
                                     type="number"
@@ -256,7 +259,7 @@ export default function Tanks({ tanks, fuelTypes }: TanksProps) {
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="current_volume">
-                                    Current volume
+                                    {t('fuel.current_volume')}
                                 </Label>
                                 <Input
                                     id="current_volume"
@@ -277,7 +280,7 @@ export default function Tanks({ tanks, fuelTypes }: TanksProps) {
                         </div>
                         <DialogFooter>
                             <Button type="submit" disabled={processing}>
-                                {editing ? 'Save changes' : 'Create'}
+                                {editing ? t('common.save_changes') : t('common.create')}
                             </Button>
                         </DialogFooter>
                     </form>

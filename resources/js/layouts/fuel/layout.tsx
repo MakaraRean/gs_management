@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { Droplets, Fuel, Gauge, Truck } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
+import { useLocale } from '@/hooks/use-locale';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -12,21 +13,22 @@ import { index as tanksIndex } from '@/routes/fuel/tanks';
 import { index as typesIndex } from '@/routes/fuel/types';
 import type { NavItem } from '@/types';
 
-const sidebarNavItems: NavItem[] = [
-    { title: 'Tanks', href: tanksIndex(), icon: Gauge },
-    { title: 'Pumps', href: pumpsIndex(), icon: Fuel },
-    { title: 'Fuel Types', href: typesIndex(), icon: Droplets },
-    { title: 'Deliveries', href: deliveriesIndex(), icon: Truck },
-];
-
 export default function FuelLayout({ children }: PropsWithChildren) {
+    const { t } = useLocale();
     const { isCurrentOrParentUrl } = useCurrentUrl();
+
+    const sidebarNavItems: NavItem[] = [
+        { title: t('fuel.tanks_title'), href: tanksIndex(), icon: Gauge },
+        { title: t('fuel.pumps_title'), href: pumpsIndex(), icon: Fuel },
+        { title: t('fuel.types_title'), href: typesIndex(), icon: Droplets },
+        { title: t('fuel.deliveries_title'), href: deliveriesIndex(), icon: Truck },
+    ];
 
     return (
         <div className="px-4 py-6">
             <Heading
-                title="Fuel Management"
-                description="Manage tanks, pumps, fuel types, and deliveries"
+                title={t('fuel.management_title')}
+                description={t('fuel.management_description')}
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">

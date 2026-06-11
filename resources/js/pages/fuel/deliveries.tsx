@@ -1,6 +1,7 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/hooks/use-locale';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,6 +56,7 @@ type DeliveriesProps = {
 };
 
 export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
+    const { t } = useLocale();
     const [open, setOpen] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -81,7 +83,7 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
     };
 
     const remove = (delivery: Delivery) => {
-        if (confirm('Delete this delivery record?')) {
+        if (confirm(t('fuel.delete_delivery_confirm'))) {
             router.delete(destroy({ delivery: delivery.id }).url, {
                 preserveScroll: true,
             });
@@ -90,30 +92,30 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
 
     return (
         <>
-            <Head title="Deliveries" />
+            <Head title={t('fuel.deliveries_title')} />
 
             <div className="space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-lg font-medium">Deliveries</h2>
+                    <h2 className="text-lg font-medium">{t('fuel.deliveries_title')}</h2>
                     <Button size="sm" onClick={openCreate}>
                         <Plus className="h-4 w-4" />
-                        Record delivery
+                        {t('fuel.record_delivery')}
                     </Button>
                 </div>
 
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Tank</TableHead>
-                            <TableHead>Supplier</TableHead>
-                            <TableHead className="text-right">Volume</TableHead>
+                            <TableHead>{t('common.date')}</TableHead>
+                            <TableHead>{t('fuel.tank')}</TableHead>
+                            <TableHead>{t('fuel.supplier')}</TableHead>
+                            <TableHead className="text-right">{t('common.volume')}</TableHead>
                             <TableHead className="text-right">
-                                Cost / unit
+                                {t('fuel.cost_per_unit')}
                             </TableHead>
-                            <TableHead className="text-right">Total</TableHead>
+                            <TableHead className="text-right">{t('common.total')}</TableHead>
                             <TableHead className="text-right">
-                                Actions
+                                {t('common.actions')}
                             </TableHead>
                         </TableRow>
                     </TableHeader>
@@ -124,7 +126,7 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
                                     colSpan={7}
                                     className="text-center text-muted-foreground"
                                 >
-                                    No deliveries yet.
+                                    {t('fuel.no_deliveries')}
                                 </TableCell>
                             </TableRow>
                         )}
@@ -170,11 +172,11 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Record delivery</DialogTitle>
+                        <DialogTitle>{t('fuel.record_delivery')}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="tank_id">Tank</Label>
+                            <Label htmlFor="tank_id">{t('fuel.tank')}</Label>
                             <Select
                                 value={data.tank_id}
                                 onValueChange={(value) =>
@@ -182,7 +184,7 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
                                 }
                             >
                                 <SelectTrigger id="tank_id" className="w-full">
-                                    <SelectValue placeholder="Select tank" />
+                                    <SelectValue placeholder={t('common.select_tank')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {tanks.map((tank) => (
@@ -202,7 +204,7 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="grid gap-2">
-                                <Label htmlFor="volume">Volume</Label>
+                                <Label htmlFor="volume">{t('common.volume')}</Label>
                                 <Input
                                     id="volume"
                                     type="number"
@@ -218,7 +220,7 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="cost_per_unit">
-                                    Cost / unit
+                                    {t('fuel.cost_per_unit')}
                                 </Label>
                                 <Input
                                     id="cost_per_unit"
@@ -239,7 +241,7 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="supplier">
-                                Supplier (optional)
+                                {t('fuel.supplier_optional')}
                             </Label>
                             <Input
                                 id="supplier"
@@ -251,7 +253,7 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
                             <InputError message={errors.supplier} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="delivered_at">Delivered at</Label>
+                            <Label htmlFor="delivered_at">{t('fuel.delivered_at')}</Label>
                             <Input
                                 id="delivered_at"
                                 type="datetime-local"
@@ -264,7 +266,7 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
                         </div>
                         <div className="flex items-center justify-between rounded-lg border px-4 py-3">
                             <span className="text-sm font-medium text-muted-foreground">
-                                Total cost
+                                {t('fuel.total_cost')}
                             </span>
                             <span className="text-xl font-bold tabular-nums">
                                 {formatCurrency(total)}
@@ -272,7 +274,7 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
                         </div>
                         <DialogFooter>
                             <Button type="submit" disabled={processing}>
-                                Record delivery
+                                {t('fuel.record_delivery')}
                             </Button>
                         </DialogFooter>
                     </form>

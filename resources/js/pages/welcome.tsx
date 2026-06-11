@@ -1,53 +1,56 @@
 import { Head, Link } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { useLocale } from '@/hooks/use-locale';
 import { dashboard, login } from '@/routes';
-
-const FEATURES = [
-    {
-        icon: '⛽',
-        title: 'Fuel Inventory',
-        description: 'Monitor tank levels, track deliveries, and get low-stock alerts before you run dry.',
-    },
-    {
-        icon: '💰',
-        title: 'Sales & Revenue',
-        description: 'Real-time pump sales data, shift totals, and daily reconciliation in one view.',
-    },
-    {
-        icon: '👥',
-        title: 'Staff Shifts',
-        description: 'Schedule attendants, log shift handovers, and track individual performance easily.',
-    },
-    {
-        icon: '📋',
-        title: 'Expense Tracking',
-        description: 'Record operational costs, maintenance, and petty cash with a clear audit trail.',
-    },
-    {
-        icon: '📈',
-        title: 'Reports & Analytics',
-        description: 'Export daily, weekly, or monthly reports to PDF or Excel with one click.',
-    },
-    {
-        icon: '🔒',
-        title: 'Role-based Access',
-        description: 'Owner, manager, and attendant roles — each sees exactly what they need.',
-    },
-];
-
-const STATS = [
-    { icon: '⛽', label: 'Fuel Tracking', value: 'Real-time' },
-    { icon: '📊', label: 'Daily Reports', value: 'Auto-generated' },
-    { icon: '👥', label: 'Staff Management', value: 'Shift-based' },
-    { icon: '🔒', label: 'Security', value: 'Role-based access' },
-];
 
 export default function Welcome() {
     const { auth } = usePage().props;
+    const { t } = useLocale();
+
+    const FEATURES = [
+        {
+            icon: '⛽',
+            title: t('welcome.feature_fuel_title'),
+            description: t('welcome.feature_fuel_description'),
+        },
+        {
+            icon: '💰',
+            title: t('welcome.feature_sales_title'),
+            description: t('welcome.feature_sales_description'),
+        },
+        {
+            icon: '👥',
+            title: t('welcome.feature_staff_title'),
+            description: t('welcome.feature_staff_description'),
+        },
+        {
+            icon: '📋',
+            title: t('welcome.feature_expense_title'),
+            description: t('welcome.feature_expense_description'),
+        },
+        {
+            icon: '📈',
+            title: t('welcome.feature_reports_title'),
+            description: t('welcome.feature_reports_description'),
+        },
+        {
+            icon: '🔒',
+            title: t('welcome.feature_access_title'),
+            description: t('welcome.feature_access_description'),
+        },
+    ];
+
+    const STATS = [
+        { icon: '⛽', label: t('welcome.stat_fuel'), value: t('welcome.stat_fuel_value') },
+        { icon: '📊', label: t('welcome.stat_reports'), value: t('welcome.stat_reports_value') },
+        { icon: '👥', label: t('welcome.stat_staff'), value: t('welcome.stat_staff_value') },
+        { icon: '🔒', label: t('welcome.stat_security'), value: t('welcome.stat_security_value') },
+    ];
 
     return (
         <>
-            <Head title="Welcome" />
+            <Head title={t('welcome.title')} />
 
             <div className="min-h-screen bg-[#0f172a] text-white">
                 {/* ── Hero ─────────────────────────────── */}
@@ -72,12 +75,15 @@ export default function Welcome() {
                         </div>
 
                         <div className="flex items-center gap-3">
+                            <div className="dark">
+                                <LanguageSwitcher />
+                            </div>
                             {auth.user ? (
                                 <Link
                                     href={dashboard()}
                                     className="rounded-lg border border-white/25 px-5 py-2 text-sm font-medium transition hover:border-white/40 hover:bg-white/8"
                                 >
-                                    Dashboard
+                                    {t('nav.dashboard')}
                                 </Link>
                             ) : (
                                 <>
@@ -85,13 +91,13 @@ export default function Welcome() {
                                         href={login()}
                                         className="rounded-lg border border-white/22 px-5 py-2 text-sm font-medium transition hover:border-white/38 hover:bg-white/8"
                                     >
-                                        Log in
+                                        {t('auth.login')}
                                     </Link>
                                     <Link
                                         href={login()}
                                         className="rounded-lg bg-amber-500 px-5 py-2 text-sm font-bold text-gray-900 shadow-[0_2px_12px_rgba(245,158,11,.35)] transition hover:-translate-y-px hover:bg-amber-600"
                                     >
-                                        Get Started →
+                                        {t('welcome.get_started')}
                                     </Link>
                                 </>
                             )}
@@ -103,21 +109,19 @@ export default function Welcome() {
                         <div className="mx-auto w-full max-w-5xl">
                             <div className="max-w-[560px]">
                                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-400/35 bg-amber-500/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-400">
-                                    ⚡ Smart Station Operations
+                                    ⚡ {t('welcome.smart_operations')}
                                 </div>
 
                                 <h1 className="mb-5 text-[clamp(2.4rem,5vw,3.6rem)] font-extrabold leading-[1.1] tracking-tight text-white">
-                                    Manage Your
+                                    {t('welcome.hero_line1')}
                                     <br />
-                                    <span className="text-amber-400">Gas Station</span>
+                                    <span className="text-amber-400">{t('welcome.hero_line2')}</span>
                                     <br />
-                                    With Confidence
+                                    {t('welcome.hero_line3')}
                                 </h1>
 
                                 <p className="mb-10 max-w-[460px] text-[1.05rem] leading-relaxed text-slate-300">
-                                    A complete management platform for gas station owners — track fuel
-                                    inventory, monitor sales, manage staff shifts, and generate instant
-                                    reports from one clean dashboard.
+                                    {t('welcome.hero_description')}
                                 </p>
 
                                 <div className="flex flex-wrap items-center gap-4">
@@ -125,13 +129,13 @@ export default function Welcome() {
                                         href={login()}
                                         className="rounded-xl bg-amber-500 px-8 py-3.5 text-base font-bold text-gray-900 shadow-[0_2px_16px_rgba(245,158,11,.4)] transition hover:-translate-y-px hover:bg-amber-600"
                                     >
-                                        Get Started Free
+                                        {t('welcome.get_started_free')}
                                     </Link>
                                     <a
                                         href="#features"
                                         className="rounded-xl border border-white/30 px-7 py-3.5 text-base font-medium transition hover:bg-white/8"
                                     >
-                                        See Features
+                                        {t('welcome.see_features')}
                                     </a>
                                 </div>
                             </div>
@@ -160,14 +164,13 @@ export default function Welcome() {
                 <section id="features" className="bg-[#1e293b] px-6 py-20 lg:px-10">
                     <div className="mx-auto max-w-5xl">
                         <p className="mb-3 text-center text-xs font-bold uppercase tracking-[.1em] text-amber-400">
-                            Everything You Need
+                            {t('welcome.everything_you_need')}
                         </p>
                         <h2 className="mb-3 text-center text-[2rem] font-extrabold text-white">
-                            Built for Gas Station Teams
+                            {t('welcome.built_for_teams')}
                         </h2>
                         <p className="mx-auto mb-12 max-w-md text-center leading-relaxed text-slate-400">
-                            From daily fuel reconciliation to monthly profit analysis, every tool is right
-                            where you need it.
+                            {t('welcome.features_description')}
                         </p>
 
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -193,7 +196,7 @@ export default function Welcome() {
 
                 {/* ── Footer ───────────────────────────── */}
                 <footer className="border-t border-white/6 bg-[#0f172a] px-6 py-8 text-center text-sm text-slate-500">
-                    © {new Date().getFullYear()} GS Management · Built with care for station operators.
+                    © {new Date().getFullYear()} GS Management · {t('welcome.footer_tagline')}
                 </footer>
             </div>
         </>

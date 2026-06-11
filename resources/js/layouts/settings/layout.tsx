@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
+import { useLocale } from '@/hooks/use-locale';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -10,32 +11,33 @@ import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: edit(),
-        icon: null,
-    },
-    {
-        title: 'Security',
-        href: editSecurity(),
-        icon: null,
-    },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-        icon: null,
-    },
-];
-
 export default function SettingsLayout({ children }: PropsWithChildren) {
+    const { t } = useLocale();
     const { isCurrentOrParentUrl } = useCurrentUrl();
+
+    const sidebarNavItems: NavItem[] = [
+        {
+            title: t('settings.profile_heading'),
+            href: edit(),
+            icon: null,
+        },
+        {
+            title: t('settings.security_nav'),
+            href: editSecurity(),
+            icon: null,
+        },
+        {
+            title: t('settings.appearance_nav'),
+            href: editAppearance(),
+            icon: null,
+        },
+    ];
 
     return (
         <div className="px-4 py-6">
             <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
+                title={t('settings.title')}
+                description={t('settings.description')}
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">

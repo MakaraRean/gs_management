@@ -7,14 +7,16 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import { useLocale } from '@/hooks/use-locale';
 import type { NavItem } from '@/types';
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
     const { isCurrentUrl } = useCurrentUrl();
+    const { t } = useLocale();
 
     return (
         <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('common.platform')}</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>

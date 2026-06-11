@@ -212,3 +212,44 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 - IMPORTANT: Activate `inertia-react-development` when working with Inertia React client-side patterns.
 
 </laravel-boost-guidelines>
+
+# Localization
+
+This app supports **Khmer (km, default)** and **English (en)**. Every UI string must be translated. Never hardcode English or Khmer text directly in TSX or PHP.
+
+## Architecture
+
+- `lang/km.json` + `lang/en.json` — flat dot-key format: `"fuel.tanks_title": "ធុងឥន្ធនៈ"`
+- `app/Http/Middleware/HandleLocale.php` — reads `locale` cookie, calls `App::setLocale()`
+- `app/Http/Middleware/HandleInertiaRequests.php` — shares `locale` and `translations` as Inertia props
+- `routes/web.php` — `POST /locale` sets the cookie and redirects
+- `bootstrap/app.php` — `locale` cookie excluded from encryption: `encryptCookies(except: ['appearance', 'sidebar_state', 'locale'])`
+- Hook: `resources/js/hooks/use-locale.tsx` — `const { t, locale, setLocale } = useLocale();`
+- Switcher: `resources/js/components/language-switcher.tsx` — wrap in `<div className="dark">` on dark backgrounds
+
+## Rules for Every New Page or Component
+
+1. Call `const { t } = useLocale();` inside the component function (never at module level).
+2. Replace every display string with `t('namespace.key')`.
+3. Add the key + translation to **both** `lang/km.json` and `lang/en.json`.
+4. Key convention: `namespace.snake_case_key` — e.g. `fuel.tanks_title`, `settings.profile_heading`.
+5. Plurals: `some.key_one` / `some.key_other` with `:count` placeholder in the value.
+6. Static arrays that contain translated strings (nav items, feature lists, category labels) must be declared **inside** the component function — not at module level — so `t()` can be called.
+7. Breadcrumb `title` fields are translation keys — `breadcrumbs.tsx` calls `t()` on them automatically.
+8. Auth layout: `Component.layout = { title: 'auth.key_title', description: 'auth.key_desc' }` — `auth-simple-layout.tsx` calls `t()` on these.
+9. PHP flash messages: `__('namespace.key')` — e.g. `session()->flash('toast', ['message' => __('sales.deleted')])`.
+
+## PHPUnit Test Patterns for Locale
+
+```php
+// Send locale cookie unencrypted (locale is in the encryption except list)
+->withUnencryptedCookie('locale', 'en')
+
+// Assert response sets an unencrypted locale cookie
+$response->assertPlainCookie('locale', 'en');
+
+// Translations are flat — dot notation does NOT mean nested
+// Wrong:  ->where('translations.dashboard.title', '...')
+// Right:
+->where('translations', fn ($t) => ($t['dashboard.title'] ?? null) === 'Dashboard')
+```

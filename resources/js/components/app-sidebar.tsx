@@ -9,6 +9,7 @@ import {
     Wallet,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -21,6 +22,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useLocale } from '@/hooks/use-locale';
 import { dashboard } from '@/routes';
 import { index as analyticsIndex } from '@/routes/analytics';
 import { index as cashFlowIndex } from '@/routes/cash-flow';
@@ -28,39 +30,6 @@ import { index as fuelTanksIndex } from '@/routes/fuel/tanks';
 import { index as reportsIndex } from '@/routes/reports';
 import { index as salesIndex } from '@/routes/sales';
 import type { NavItem } from '@/types';
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Sales',
-        href: salesIndex(),
-        icon: Receipt,
-    },
-    {
-        title: 'Fuel Management',
-        href: fuelTanksIndex(),
-        icon: Fuel,
-    },
-    {
-        title: 'Cash Flow',
-        href: cashFlowIndex(),
-        icon: Wallet,
-    },
-    {
-        title: 'Sales Analysis',
-        href: analyticsIndex(),
-        icon: LineChart,
-    },
-    {
-        title: 'Reports',
-        href: reportsIndex(),
-        icon: BookOpen,
-    },
-];
 
 const footerNavItems: NavItem[] = [
     {
@@ -76,6 +45,41 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { t } = useLocale();
+
+    const mainNavItems: NavItem[] = [
+        {
+            title: t('nav.dashboard'),
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+        {
+            title: t('nav.sales'),
+            href: salesIndex(),
+            icon: Receipt,
+        },
+        {
+            title: t('nav.fuel_management'),
+            href: fuelTanksIndex(),
+            icon: Fuel,
+        },
+        {
+            title: t('nav.cash_flow'),
+            href: cashFlowIndex(),
+            icon: Wallet,
+        },
+        {
+            title: t('nav.sales_analysis'),
+            href: analyticsIndex(),
+            icon: LineChart,
+        },
+        {
+            title: t('nav.reports'),
+            href: reportsIndex(),
+            icon: BookOpen,
+        },
+    ];
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -95,6 +99,9 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
+                <div className="px-2 pb-1">
+                    <LanguageSwitcher />
+                </div>
                 <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>

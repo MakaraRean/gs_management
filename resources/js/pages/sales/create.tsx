@@ -1,5 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Fuel } from 'lucide-react';
+import { useLocale } from '@/hooks/use-locale';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +31,7 @@ type CreateSaleProps = {
 };
 
 export default function CreateSale({ pumps }: CreateSaleProps) {
+    const { t } = useLocale();
     const { data, setData, post, processing, errors } = useForm({
         pump_id: '',
         volume: '',
@@ -49,26 +51,25 @@ export default function CreateSale({ pumps }: CreateSaleProps) {
 
     return (
         <>
-            <Head title="Record sale" />
+            <Head title={t('sales.record_sale')} />
 
             <div className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 p-4">
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Fuel className="h-5 w-5" />
-                            Record a Sale
+                            {t('sales.record_a_sale')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         {pumps.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
-                                No active pumps available. Add a pump under Fuel
-                                Management first.
+                                {t('sales.no_pumps')}
                             </p>
                         ) : (
                             <form onSubmit={submit} className="space-y-5">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="pump_id">Pump</Label>
+                                    <Label htmlFor="pump_id">{t('common.pump')}</Label>
                                     <Select
                                         value={data.pump_id}
                                         onValueChange={(value) =>
@@ -79,7 +80,7 @@ export default function CreateSale({ pumps }: CreateSaleProps) {
                                             id="pump_id"
                                             className="w-full"
                                         >
-                                            <SelectValue placeholder="Select a pump" />
+                                            <SelectValue placeholder={t('common.select_pump')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {pumps.map((pump) => (
@@ -106,7 +107,7 @@ export default function CreateSale({ pumps }: CreateSaleProps) {
                                             /{selectedPump.unit}
                                         </span>
                                         <span className="text-muted-foreground">
-                                            Available:{' '}
+                                            {t('common.available')}:{' '}
                                             {formatVolume(
                                                 selectedPump.available_volume,
                                                 selectedPump.unit,
@@ -117,7 +118,7 @@ export default function CreateSale({ pumps }: CreateSaleProps) {
 
                                 <div className="grid gap-2">
                                     <Label htmlFor="volume">
-                                        Volume{' '}
+                                        {t('common.volume')}{' '}
                                         {selectedPump
                                             ? `(${selectedPump.unit})`
                                             : ''}
@@ -143,7 +144,7 @@ export default function CreateSale({ pumps }: CreateSaleProps) {
 
                                 <div className="grid gap-2">
                                     <Label htmlFor="payment_method">
-                                        Payment method
+                                        {t('sales.payment_method')}
                                     </Label>
                                     <Select
                                         value={data.payment_method}
@@ -159,10 +160,10 @@ export default function CreateSale({ pumps }: CreateSaleProps) {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="cash">
-                                                Cash
+                                                {t('sales.cash')}
                                             </SelectItem>
                                             <SelectItem value="card">
-                                                Card
+                                                {t('sales.card')}
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -173,7 +174,7 @@ export default function CreateSale({ pumps }: CreateSaleProps) {
 
                                 <div className="flex items-center justify-between rounded-lg border px-4 py-3">
                                     <span className="text-sm font-medium text-muted-foreground">
-                                        Total
+                                        {t('common.total')}
                                     </span>
                                     <span className="text-2xl font-bold tabular-nums">
                                         {formatCurrency(total)}
@@ -186,14 +187,14 @@ export default function CreateSale({ pumps }: CreateSaleProps) {
                                         variant="outline"
                                         asChild
                                     >
-                                        <a href={index().url}>Cancel</a>
+                                        <a href={index().url}>{t('common.cancel')}</a>
                                     </Button>
                                     <Button
                                         type="submit"
                                         disabled={processing}
                                         className="h-11"
                                     >
-                                        Record sale
+                                        {t('sales.record_sale')}
                                     </Button>
                                 </div>
                             </form>
@@ -207,7 +208,7 @@ export default function CreateSale({ pumps }: CreateSaleProps) {
 
 CreateSale.layout = {
     breadcrumbs: [
-        { title: 'Sales', href: index() },
-        { title: 'Record sale', href: create() },
+        { title: 'sales.title', href: index() },
+        { title: 'sales.record_sale', href: create() },
     ],
 };

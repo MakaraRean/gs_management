@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/hooks/use-locale';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -61,6 +62,7 @@ export default function SalesIndex({
     filters,
     fuelTypes,
 }: SalesIndexProps) {
+    const { t } = useLocale();
     const [from, setFrom] = useState(filters.from ?? '');
     const [to, setTo] = useState(filters.to ?? '');
     const [fuelTypeId, setFuelTypeId] = useState(
@@ -80,28 +82,29 @@ export default function SalesIndex({
     };
 
     const removeSale = (id: number) => {
-        if (confirm('Delete this sale? Tank volume will not be restored.')) {
+        if (confirm(t('sales.delete_confirm'))) {
             router.delete(destroy({ sale: id }).url, { preserveScroll: true });
         }
     };
 
     return (
         <>
-            <Head title="Sales" />
+            <Head title={t('sales.title')} />
 
             <div className="flex flex-1 flex-col gap-4 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-xl font-semibold">Sales</h1>
+                        <h1 className="text-xl font-semibold">{t('sales.title')}</h1>
                         <p className="text-sm text-muted-foreground">
-                            {sales.total} total transaction
-                            {sales.total === 1 ? '' : 's'}
+                            {sales.total === 1
+                                ? t('sales.total_transactions_one')
+                                : t('sales.total_transactions_other', { count: String(sales.total) })}
                         </p>
                     </div>
                     <Button asChild className="w-full sm:w-auto">
                         <Link href={create()}>
                             <Plus className="h-4 w-4" />
-                            Record sale
+                            {t('sales.record_sale')}
                         </Link>
                     </Button>
                 </div>
@@ -109,7 +112,7 @@ export default function SalesIndex({
                 <Card>
                     <CardContent className="flex flex-col gap-3 pt-6 md:flex-row md:items-end">
                         <div className="grid flex-1 gap-1.5">
-                            <Label htmlFor="from">From</Label>
+                            <Label htmlFor="from">{t('common.from')}</Label>
                             <Input
                                 id="from"
                                 type="date"
@@ -120,7 +123,7 @@ export default function SalesIndex({
                             />
                         </div>
                         <div className="grid flex-1 gap-1.5">
-                            <Label htmlFor="to">To</Label>
+                            <Label htmlFor="to">{t('common.to')}</Label>
                             <Input
                                 id="to"
                                 type="date"
@@ -129,7 +132,7 @@ export default function SalesIndex({
                             />
                         </div>
                         <div className="grid flex-1 gap-1.5">
-                            <Label htmlFor="fuel_type">Fuel type</Label>
+                            <Label htmlFor="fuel_type">{t('sales.fuel_type')}</Label>
                             <Select
                                 value={fuelTypeId}
                                 onValueChange={setFuelTypeId}
@@ -141,7 +144,7 @@ export default function SalesIndex({
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All</SelectItem>
+                                    <SelectItem value="all">{t('common.all')}</SelectItem>
                                     {fuelTypes.map((fuelType) => (
                                         <SelectItem
                                             key={fuelType.id}
@@ -157,7 +160,7 @@ export default function SalesIndex({
                             onClick={applyFilters}
                             className="w-full md:w-auto"
                         >
-                            Apply
+                            {t('common.apply')}
                         </Button>
                     </CardContent>
                 </Card>
@@ -166,7 +169,7 @@ export default function SalesIndex({
                 <div className="grid gap-3 md:hidden">
                     {sales.data.length === 0 && (
                         <p className="text-sm text-muted-foreground">
-                            No sales found.
+                            {t('sales.no_sales')}
                         </p>
                     )}
                     {sales.data.map((sale) => (
@@ -202,7 +205,7 @@ export default function SalesIndex({
                                     onClick={() => removeSale(sale.id)}
                                 >
                                     <Trash2 className="h-4 w-4" />
-                                    Delete
+                                    {t('common.delete')}
                                 </Button>
                             </CardContent>
                         </Card>
@@ -215,21 +218,21 @@ export default function SalesIndex({
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>When</TableHead>
-                                    <TableHead>Pump</TableHead>
-                                    <TableHead>Fuel</TableHead>
+                                    <TableHead>{t('common.when')}</TableHead>
+                                    <TableHead>{t('common.pump')}</TableHead>
+                                    <TableHead>{t('common.fuel')}</TableHead>
                                     <TableHead className="text-right">
-                                        Volume
+                                        {t('common.volume')}
                                     </TableHead>
                                     <TableHead className="text-right">
-                                        Unit price
+                                        {t('sales.unit_price')}
                                     </TableHead>
                                     <TableHead className="text-right">
-                                        Total
+                                        {t('common.total')}
                                     </TableHead>
-                                    <TableHead>Payment</TableHead>
+                                    <TableHead>{t('common.payment')}</TableHead>
                                     <TableHead className="text-right">
-                                        Actions
+                                        {t('common.actions')}
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -240,7 +243,7 @@ export default function SalesIndex({
                                             colSpan={8}
                                             className="text-center text-muted-foreground"
                                         >
-                                            No sales found.
+                                            {t('sales.no_sales')}
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -331,5 +334,5 @@ export default function SalesIndex({
 }
 
 SalesIndex.layout = {
-    breadcrumbs: [{ title: 'Sales', href: index() }],
+    breadcrumbs: [{ title: 'sales.title', href: index() }],
 };

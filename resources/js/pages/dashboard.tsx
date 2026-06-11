@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { DollarSign, Droplets, Receipt, Wallet } from 'lucide-react';
+import { useLocale } from '@/hooks/use-locale';
 import {
     Area,
     AreaChart,
@@ -75,39 +76,41 @@ export default function Dashboard({
     recentSales,
     revenueByDay,
 }: DashboardProps) {
+    const { t } = useLocale();
+
     return (
         <>
-            <Head title="Dashboard" />
+            <Head title={t('dashboard.title')} />
 
             <div className="flex flex-1 flex-col gap-4 p-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <StatCard
-                        title="Today's Revenue"
+                        title={t('dashboard.today_revenue')}
                         value={formatCurrency(stats.today_revenue)}
                         icon={DollarSign}
                     />
                     <StatCard
-                        title="Today's Volume"
+                        title={t('dashboard.today_volume')}
                         value={formatVolume(stats.today_volume)}
                         icon={Droplets}
                     />
                     <StatCard
-                        title="Transactions Today"
+                        title={t('dashboard.transactions_today')}
                         value={String(stats.today_transactions)}
                         icon={Receipt}
                     />
                     <StatCard
-                        title="Net Cash on Hand"
+                        title={t('dashboard.net_cash')}
                         value={formatCurrency(stats.net_cash)}
                         icon={Wallet}
-                        hint="Cash sales + income − purchases − expenses"
+                        hint={t('dashboard.net_cash_hint')}
                     />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle>Revenue — last 7 days</CardTitle>
+                            <CardTitle>{t('dashboard.revenue_last_7_days')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="h-64 w-full">
@@ -180,12 +183,12 @@ export default function Dashboard({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Tank Levels</CardTitle>
+                            <CardTitle>{t('dashboard.tank_levels')}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {tanks.length === 0 && (
                                 <p className="text-sm text-muted-foreground">
-                                    No tanks configured yet.
+                                    {t('dashboard.no_tanks')}
                                 </p>
                             )}
                             {tanks.map((tank) => (
@@ -228,7 +231,7 @@ export default function Dashboard({
                                         </span>
                                         {tank.fill_percentage <= 15 && (
                                             <Badge variant="destructive">
-                                                Low
+                                                {t('common.low')}
                                             </Badge>
                                         )}
                                     </div>
@@ -240,25 +243,25 @@ export default function Dashboard({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Recent Sales</CardTitle>
+                        <CardTitle>{t('dashboard.recent_sales')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {recentSales.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
-                                No sales recorded yet.
+                                {t('dashboard.no_sales')}
                             </p>
                         ) : (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>When</TableHead>
-                                        <TableHead>Pump</TableHead>
-                                        <TableHead>Fuel</TableHead>
+                                        <TableHead>{t('common.when')}</TableHead>
+                                        <TableHead>{t('common.pump')}</TableHead>
+                                        <TableHead>{t('common.fuel')}</TableHead>
                                         <TableHead className="text-right">
-                                            Volume
+                                            {t('common.volume')}
                                         </TableHead>
                                         <TableHead className="text-right">
-                                            Amount
+                                            {t('common.amount')}
                                         </TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -300,7 +303,7 @@ export default function Dashboard({
 Dashboard.layout = {
     breadcrumbs: [
         {
-            title: 'Dashboard',
+            title: 'dashboard.title',
             href: dashboard(),
         },
     ],
