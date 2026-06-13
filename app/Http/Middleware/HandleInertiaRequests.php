@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Station;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -44,6 +45,28 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'locale' => app()->getLocale(),
             'translations' => (object) $this->loadTranslations(app()->getLocale()),
+            'current_station' => function () {
+                $s = app()->bound('current.station') ? app('current.station') : null;
+
+                return $s ? ['id' => $s->id, 'name' => $s->name, 'business_id' => $s->business_id] : null;
+            },
+            'stations' => function () use ($request) {
+                $user = $request->user();
+
+                return $user?->business_id
+                    ? Station::query()
+                        ->where('business_id', $user->business_id)
+                        ->orderBy('name')
+                        ->get(['id', 'name', 'business_id'])
+                    : [];
+            },
+            'has_business' => fn () => (bool) $request->user()?->business_id,
+            'has_station' => fn () => (bool) $request->user()?->business?->stations()->exists(),
+            'is_business_owner' => function () use ($request) {
+                $user = $request->user();
+
+                return (bool) ($user?->business && $user->business->user_id === $user->id);
+            },
         ];
     }
 

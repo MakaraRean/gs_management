@@ -15,6 +15,11 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             locale: 'km' | 'en';
             translations: Record<string, string>;
+            current_station: { id: number; name: string; business_id: number } | null;
+            stations: Array<{ id: number; name: string; business_id: number }>;
+            has_business: boolean;
+            has_station: boolean;
+            is_business_owner: boolean;
             [key: string]: unknown;
         };
     }

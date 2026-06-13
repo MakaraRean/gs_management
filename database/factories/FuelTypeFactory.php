@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\FuelType;
+use App\Models\Station;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,6 +19,7 @@ class FuelTypeFactory extends Factory
     public function definition(): array
     {
         return [
+            'station_id' => Station::factory(),
             'name' => fake()->randomElement(['Regular 92', 'Super 95', 'Diesel', 'Premium 98']),
             'unit_price' => fake()->randomFloat(2, 1, 3),
             'unit' => 'L',

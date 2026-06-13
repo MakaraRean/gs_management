@@ -45,7 +45,7 @@ class FuelDeliveryController extends Controller
 
     public function destroy(FuelDelivery $delivery): RedirectResponse
     {
-        $delivery->delete();
+        $delivery->deactivate();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Delivery deleted.')]);
 

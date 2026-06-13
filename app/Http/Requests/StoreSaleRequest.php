@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Pump;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,18 +28,23 @@ class StoreSaleRequest extends FormRequest
         return [
             'pump_id' => ['required', 'exists:pumps,id'],
             'volume' => ['required', 'numeric', 'min:0.01'],
-            'payment_method' => ['required', Rule::in(['cash', 'card'])],
+            'payment_method' => ['required', Rule::in(['cash', 'card', 'credit'])],
+            'customer_id' => ['nullable', 'exists:customers,id'],
             'sold_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
 
     /**
-     * Ensure the pump's tank holds enough fuel for the requested volume.
+     * Ensure the pump's tank holds enough fuel for the requested volume,
+     * and that credit sales always have a customer.
      */
-    public function withValidator(Validator $validator): void
+    public function withValidator(ValidatorContract $validator): void
     {
-        $validator->after(function (Validator $validator): void {
+        $validator->after(function (ValidatorContract $validator): void {
+            if ($this->input('payment_method') === 'credit' && ! $this->input('customer_id')) {
+                $validator->errors()->add('customer_id', __('credit.customer_required'));
+            }
             $pump = Pump::with('tank')->find($this->input('pump_id'));
 
             if ($pump === null) {

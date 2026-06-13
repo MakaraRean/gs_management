@@ -6,14 +6,19 @@ use App\Models\CashFlow;
 use App\Models\FuelDelivery;
 use App\Models\Sale;
 use App\Models\Tank;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        if (! $request->user()->business_id) {
+            return Inertia::render('dashboard/locked');
+        }
+
         $today = Carbon::today();
 
         $todaySales = Sale::query()->whereDate('sold_at', $today);

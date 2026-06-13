@@ -5,11 +5,15 @@ import {
     Fuel,
     LayoutGrid,
     LineChart,
+    MapPin,
     Receipt,
+    Users,
+    UsersRound,
     Wallet,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { StationSwitcher } from '@/components/station-switcher';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -26,9 +30,12 @@ import { useLocale } from '@/hooks/use-locale';
 import { dashboard } from '@/routes';
 import { index as analyticsIndex } from '@/routes/analytics';
 import { index as cashFlowIndex } from '@/routes/cash-flow';
+import { index as customersIndex } from '@/routes/customers';
 import { index as fuelTanksIndex } from '@/routes/fuel/tanks';
 import { index as reportsIndex } from '@/routes/reports';
 import { index as salesIndex } from '@/routes/sales';
+import { index as stationsIndex } from '@/routes/stations';
+import { index as teamIndex } from '@/routes/team';
 import type { NavItem } from '@/types';
 
 const footerNavItems: NavItem[] = [
@@ -78,6 +85,21 @@ export function AppSidebar() {
             href: reportsIndex(),
             icon: BookOpen,
         },
+        {
+            title: t('nav.stations'),
+            href: stationsIndex(),
+            icon: MapPin,
+        },
+        {
+            title: t('nav.team'),
+            href: teamIndex(),
+            icon: UsersRound,
+        },
+        {
+            title: t('nav.customers'),
+            href: customersIndex(),
+            icon: Users,
+        },
     ];
 
     return (
@@ -95,6 +117,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
+                <StationSwitcher />
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 

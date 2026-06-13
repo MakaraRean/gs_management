@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\HasActiveScope;
+use Database\Factories\FuelTypeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FuelType extends Model
 {
-    /** @use HasFactory<\Database\Factories\FuelTypeFactory> */
-    use HasFactory;
+    /** @use HasFactory<FuelTypeFactory> */
+    use HasActiveScope, HasFactory;
 
     protected $fillable = [
+        'station_id',
         'name',
         'unit_price',
         'unit',
@@ -26,6 +30,14 @@ class FuelType extends Model
         return [
             'unit_price' => 'decimal:2',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Station, $this>
+     */
+    public function station(): BelongsTo
+    {
+        return $this->belongsTo(Station::class);
     }
 
     /**

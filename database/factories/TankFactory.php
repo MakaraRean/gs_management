@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\FuelType;
+use App\Models\Station;
 use App\Models\Tank;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -23,6 +24,7 @@ class TankFactory extends Factory
         return [
             'name' => 'Tank '.fake()->unique()->randomLetter(),
             'fuel_type_id' => FuelType::factory(),
+            'station_id' => Station::factory(),
             'capacity' => $capacity,
             'current_volume' => fake()->randomFloat(2, $capacity * 0.1, $capacity),
         ];

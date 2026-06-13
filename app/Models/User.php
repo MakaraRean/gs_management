@@ -3,8 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\HasActiveScope;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\Contracts\PasskeyUser;
@@ -14,7 +17,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasActiveScope, HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -22,6 +25,7 @@ class User extends Authenticatable implements PasskeyUser
      * @var list<string>
      */
     protected $fillable = [
+        'business_id',
         'name',
         'email',
         'password',
@@ -38,6 +42,26 @@ class User extends Authenticatable implements PasskeyUser
         'two_factor_recovery_codes',
         'remember_token',
     ];
+
+    /**
+     * The business this user belongs to (membership).
+     *
+     * @return BelongsTo<Business, $this>
+     */
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(Business::class);
+    }
+
+    /**
+     * Businesses this user owns/created.
+     *
+     * @return HasMany<Business, $this>
+     */
+    public function businesses(): HasMany
+    {
+        return $this->hasMany(Business::class);
+    }
 
     /**
      * Get the attributes that should be cast.

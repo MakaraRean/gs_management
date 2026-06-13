@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\HasActiveScope;
+use Database\Factories\FuelDeliveryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FuelDelivery extends Model
 {
-    /** @use HasFactory<\Database\Factories\FuelDeliveryFactory> */
-    use HasFactory;
+    /** @use HasFactory<FuelDeliveryFactory> */
+    use HasActiveScope, HasFactory;
 
     protected $fillable = [
         'tank_id',

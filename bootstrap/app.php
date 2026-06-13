@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\HandleActiveStation;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\HandleLocale;
@@ -16,11 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'locale']);
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'locale', 'station_id']);
 
         $middleware->web(append: [
             HandleAppearance::class,
             HandleLocale::class,
+            HandleActiveStation::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);

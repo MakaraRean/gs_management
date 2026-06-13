@@ -6,9 +6,11 @@ use App\Http\Requests\CashFlowRequest;
 use App\Models\CashFlow;
 use App\Models\FuelDelivery;
 use App\Models\Sale;
+use App\Models\Station;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,8 +20,9 @@ class CashFlowController extends Controller
     {
         $from = $request->date('from') ?? Carbon::today()->subDays(29);
         $to = $request->date('to') ?? Carbon::today();
+        $station = $this->currentStation();
 
-        $entries = $this->ledger($from, $to);
+        $entries = $this->ledger($from, $to, $station);
 
         $totalIn = $entries->where('direction', 'in')->sum('amount');
         $totalOut = $entries->where('direction', 'out')->sum('amount');
@@ -43,6 +46,7 @@ class CashFlowController extends Controller
         CashFlow::create([
             ...$request->validated(),
             'user_id' => $request->user()?->id,
+            'station_id' => $this->currentStation()->id,
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Cash entry recorded.')]);
@@ -52,7 +56,9 @@ class CashFlowController extends Controller
 
     public function destroy(CashFlow $cashFlow): RedirectResponse
     {
-        $cashFlow->delete();
+        abort_unless($cashFlow->station_id === $this->currentStation()->id, 403);
+
+        $cashFlow->deactivate();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Cash entry deleted.')]);
 
@@ -62,11 +68,12 @@ class CashFlowController extends Controller
     /**
      * Build a unified cash ledger: daily cash sales (in), deliveries (out), manual entries.
      *
-     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     * @return Collection<int, array<string, mixed>>
      */
-    private function ledger(Carbon $from, Carbon $to): \Illuminate\Support\Collection
+    private function ledger(Carbon $from, Carbon $to, Station $station): Collection
     {
         $cashSales = Sale::query()
+            ->where('station_id', $station->id)
             ->where('payment_method', 'cash')
             ->whereBetween('sold_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
             ->selectRaw('DATE(sold_at) as day, SUM(total_amount) as total')
@@ -83,6 +90,7 @@ class CashFlowController extends Controller
             ]);
 
         $deliveries = FuelDelivery::query()
+            ->whereHas('tank', fn ($q) => $q->where('station_id', $station->id))
             ->with('tank:id,name')
             ->whereBetween('delivered_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
             ->get()
@@ -97,6 +105,7 @@ class CashFlowController extends Controller
             ]);
 
         $manual = CashFlow::query()
+            ->where('station_id', $station->id)
             ->whereBetween('occurred_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
             ->get()
             ->map(fn (CashFlow $entry): array => [

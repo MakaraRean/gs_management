@@ -14,12 +14,16 @@ class PumpController extends Controller
 {
     public function index(): Response
     {
+        $station = $this->currentStation();
+
         return Inertia::render('fuel/pumps', [
             'pumps' => Pump::query()
+                ->whereHas('tank', fn ($q) => $q->where('station_id', $station->id))
                 ->with('tank.fuelType')
                 ->orderBy('name')
                 ->get(),
             'tanks' => Tank::query()
+                ->where('station_id', $station->id)
                 ->with('fuelType')
                 ->orderBy('name')
                 ->get(['id', 'name', 'fuel_type_id']),
@@ -37,6 +41,11 @@ class PumpController extends Controller
 
     public function update(PumpRequest $request, Pump $pump): RedirectResponse
     {
+        abort_unless(
+            $pump->tank->station_id === $this->currentStation()->id,
+            403
+        );
+
         $pump->update($request->validated());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Pump updated.')]);
@@ -46,7 +55,12 @@ class PumpController extends Controller
 
     public function destroy(Pump $pump): RedirectResponse
     {
-        $pump->delete();
+        abort_unless(
+            $pump->tank->station_id === $this->currentStation()->id,
+            403
+        );
+
+        $pump->deactivate();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Pump deleted.')]);
 

@@ -26,16 +26,24 @@ type PumpOption = {
     available_volume: number;
 };
 
-type CreateSaleProps = {
-    pumps: PumpOption[];
+type CustomerOption = {
+    id: number;
+    name: string;
+    phone: string | null;
 };
 
-export default function CreateSale({ pumps }: CreateSaleProps) {
+type CreateSaleProps = {
+    pumps: PumpOption[];
+    customers: CustomerOption[];
+};
+
+export default function CreateSale({ pumps, customers }: CreateSaleProps) {
     const { t } = useLocale();
     const { data, setData, post, processing, errors } = useForm({
         pump_id: '',
         volume: '',
         payment_method: 'cash',
+        customer_id: '',
         sold_at: '',
         notes: '',
     });
@@ -148,29 +156,48 @@ export default function CreateSale({ pumps }: CreateSaleProps) {
                                     </Label>
                                     <Select
                                         value={data.payment_method}
-                                        onValueChange={(value) =>
-                                            setData('payment_method', value)
-                                        }
+                                        onValueChange={(value) => {
+                                            setData('payment_method', value);
+                                            if (value !== 'credit') setData('customer_id', '');
+                                        }}
                                     >
-                                        <SelectTrigger
-                                            id="payment_method"
-                                            className="w-full"
-                                        >
+                                        <SelectTrigger id="payment_method" className="w-full">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="cash">
-                                                {t('sales.cash')}
-                                            </SelectItem>
-                                            <SelectItem value="card">
-                                                {t('sales.card')}
-                                            </SelectItem>
+                                            <SelectItem value="cash">{t('sales.cash')}</SelectItem>
+                                            <SelectItem value="card">{t('sales.card')}</SelectItem>
+                                            {customers.length > 0 && (
+                                                <SelectItem value="credit">
+                                                    {t('credit.payment_method_credit')}
+                                                </SelectItem>
+                                            )}
                                         </SelectContent>
                                     </Select>
-                                    <InputError
-                                        message={errors.payment_method}
-                                    />
+                                    <InputError message={errors.payment_method} />
                                 </div>
+
+                                {data.payment_method === 'credit' && (
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="customer_id">{t('nav.customers')}</Label>
+                                        <Select
+                                            value={data.customer_id}
+                                            onValueChange={(value) => setData('customer_id', value)}
+                                        >
+                                            <SelectTrigger id="customer_id" className="w-full">
+                                                <SelectValue placeholder="—" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {customers.map((c) => (
+                                                    <SelectItem key={c.id} value={String(c.id)}>
+                                                        {c.name}{c.phone ? ` — ${c.phone}` : ''}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError message={errors.customer_id} />
+                                    </div>
+                                )}
 
                                 <div className="flex items-center justify-between rounded-lg border px-4 py-3">
                                     <span className="text-sm font-medium text-muted-foreground">

@@ -77,6 +77,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Redirects
+    |--------------------------------------------------------------------------
+    |
+    | New registrations are sent to onboarding to create their first business
+    | and station. Other flows fall back to the "home" path above.
+    |
+    */
+
+    'redirects' => [
+        'register' => '/onboarding',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Fortify Routes Prefix / Subdomain
     |--------------------------------------------------------------------------
     |

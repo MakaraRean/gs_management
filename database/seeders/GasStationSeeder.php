@@ -2,11 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\Business;
 use App\Models\CashFlow;
 use App\Models\FuelDelivery;
 use App\Models\FuelType;
 use App\Models\Pump;
 use App\Models\Sale;
+use App\Models\Station;
 use App\Models\Tank;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -21,6 +23,22 @@ class GasStationSeeder extends Seeder
     {
         $user = User::query()->first();
 
+        $business = Business::create([
+            'name' => 'Demo Petroleum',
+            'phone' => '012 345 678',
+            'email' => 'demo@example.com',
+            'address' => 'Phnom Penh',
+        ]);
+        $business->user()->associate($user)->save();
+
+        $station = Station::create([
+            'business_id' => $business->id,
+            'name' => 'Demo Petroleum — Main Station',
+            'phone' => $business->phone,
+            'email' => $business->email,
+            'address' => $business->address,
+        ]);
+
         $fuelTypes = collect([
             ['name' => 'Regular 92', 'unit_price' => 1.25, 'color' => '#16a34a'],
             ['name' => 'Super 95', 'unit_price' => 1.45, 'color' => '#2563eb'],
@@ -28,6 +46,7 @@ class GasStationSeeder extends Seeder
         ])->map(fn (array $attributes): FuelType => FuelType::create([
             ...$attributes,
             'unit' => 'L',
+            'station_id' => $station->id,
         ]));
 
         // One tank + two pumps per fuel type.
@@ -36,6 +55,7 @@ class GasStationSeeder extends Seeder
         foreach ($fuelTypes as $index => $fuelType) {
             $capacity = 30000;
             $tank = Tank::create([
+                'station_id' => $station->id,
                 'name' => 'Tank '.chr(65 + $index),
                 'fuel_type_id' => $fuelType->id,
                 'capacity' => $capacity,
@@ -71,6 +91,7 @@ class GasStationSeeder extends Seeder
                 $volume = round(mt_rand(500, 8000) / 100, 2);
 
                 Sale::create([
+                    'station_id' => $station->id,
                     'pump_id' => $pump->id,
                     'fuel_type_id' => $fuelType->id,
                     'user_id' => $user?->id,
@@ -86,6 +107,7 @@ class GasStationSeeder extends Seeder
         // A few manual cash-flow entries (expenses / misc income).
         CashFlow::factory()->count(8)->create([
             'user_id' => $user?->id,
+            'station_id' => $station->id,
         ]);
     }
 }

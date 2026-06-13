@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\StationSwitchController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,10 @@ Route::post('/locale', function (Request $request) {
         cookie()->forever('locale', $locale, '/', null, false, false, false, 'lax')
     );
 })->name('locale.set');
+
+Route::post('/station', [StationSwitchController::class, 'switch'])
+    ->middleware(['auth', 'verified'])
+    ->name('station.switch');
 
 require __DIR__.'/app.php';
 require __DIR__.'/settings.php';

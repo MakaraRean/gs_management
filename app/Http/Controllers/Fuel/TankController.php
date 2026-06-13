@@ -14,7 +14,10 @@ class TankController extends Controller
 {
     public function index(): Response
     {
+        $station = $this->currentStation();
+
         $tanks = Tank::query()
+            ->where('station_id', $station->id)
             ->with('fuelType')
             ->withCount('pumps')
             ->orderBy('name')
@@ -26,13 +29,19 @@ class TankController extends Controller
 
         return Inertia::render('fuel/tanks', [
             'tanks' => $tanks,
-            'fuelTypes' => FuelType::query()->orderBy('name')->get(['id', 'name', 'unit']),
+            'fuelTypes' => FuelType::query()
+                ->where('station_id', $station->id)
+                ->orderBy('name')
+                ->get(['id', 'name', 'unit']),
         ]);
     }
 
     public function store(TankRequest $request): RedirectResponse
     {
-        Tank::create($request->validated());
+        Tank::create([
+            ...$request->validated(),
+            'station_id' => $this->currentStation()->id,
+        ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Tank created.')]);
 
@@ -41,6 +50,8 @@ class TankController extends Controller
 
     public function update(TankRequest $request, Tank $tank): RedirectResponse
     {
+        abort_unless($tank->station_id === $this->currentStation()->id, 403);
+
         $tank->update($request->validated());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Tank updated.')]);
@@ -50,7 +61,9 @@ class TankController extends Controller
 
     public function destroy(Tank $tank): RedirectResponse
     {
-        $tank->delete();
+        abort_unless($tank->station_id === $this->currentStation()->id, 403);
+
+        $tank->deactivate();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Tank deleted.')]);
 

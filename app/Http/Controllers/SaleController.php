@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSaleRequest;
+use App\Models\Customer;
 use App\Models\FuelType;
 use App\Models\Pump;
 use App\Models\Sale;
@@ -17,6 +18,8 @@ class SaleController extends Controller
 {
     public function index(Request $request): Response
     {
+        $station = $this->currentStation();
+
         $filters = [
             'from' => $request->date('from')?->toDateString(),
             'to' => $request->date('to')?->toDateString(),
@@ -24,6 +27,7 @@ class SaleController extends Controller
         ];
 
         $sales = Sale::query()
+            ->where('station_id', $station->id)
             ->with(['pump:id,name', 'fuelType:id,name,unit', 'user:id,name'])
             ->when($filters['from'], fn ($query, $from) => $query->whereDate('sold_at', '>=', $from))
             ->when($filters['to'], fn ($query, $to) => $query->whereDate('sold_at', '<=', $to))
@@ -35,15 +39,28 @@ class SaleController extends Controller
         return Inertia::render('sales/index', [
             'sales' => $sales,
             'filters' => $filters,
-            'fuelTypes' => FuelType::query()->orderBy('name')->get(['id', 'name']),
+            'fuelTypes' => FuelType::query()
+                ->where('station_id', $station->id)
+                ->orderBy('name')
+                ->get(['id', 'name']),
         ]);
     }
 
     public function create(): Response
     {
+        $station = $this->currentStation();
+        $business = $this->currentBusiness();
+
+        $customers = Customer::query()
+            ->where('business_id', $business->id)
+            ->where(fn ($q) => $q->whereNull('station_id')->orWhere('station_id', $station->id))
+            ->orderBy('name')
+            ->get(['id', 'name', 'phone']);
+
         return Inertia::render('sales/create', [
             'pumps' => Pump::query()
                 ->where('status', 'active')
+                ->whereHas('tank', fn ($q) => $q->where('station_id', $station->id))
                 ->with('tank.fuelType')
                 ->orderBy('name')
                 ->get()
@@ -56,6 +73,7 @@ class SaleController extends Controller
                     'unit_price' => (float) $pump->tank->fuelType->unit_price,
                     'available_volume' => (float) $pump->tank->current_volume,
                 ]),
+            'customers' => $customers,
         ]);
     }
 
@@ -65,11 +83,15 @@ class SaleController extends Controller
         $volume = (float) $request->input('volume');
         $unitPrice = (float) $pump->tank->fuelType->unit_price;
 
+        abort_unless($pump->tank->station_id === $this->currentStation()->id, 403);
+
         DB::transaction(function () use ($request, $pump, $volume, $unitPrice): void {
             Sale::create([
                 'pump_id' => $pump->id,
                 'fuel_type_id' => $pump->tank->fuel_type_id,
                 'user_id' => $request->user()?->id,
+                'station_id' => $pump->tank->station_id,
+                'customer_id' => $request->input('customer_id'),
                 'volume' => $volume,
                 'unit_price' => $unitPrice,
                 'total_amount' => round($volume * $unitPrice, 2),
@@ -88,7 +110,9 @@ class SaleController extends Controller
 
     public function destroy(Sale $sale): RedirectResponse
     {
-        $sale->delete();
+        abort_unless($sale->station_id === $this->currentStation()->id, 403);
+
+        $sale->deactivate();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Sale deleted.')]);
 

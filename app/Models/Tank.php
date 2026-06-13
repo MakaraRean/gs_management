@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\HasActiveScope;
+use Database\Factories\TankFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,12 +11,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tank extends Model
 {
-    /** @use HasFactory<\Database\Factories\TankFactory> */
-    use HasFactory;
+    /** @use HasFactory<TankFactory> */
+    use HasActiveScope, HasFactory;
 
     protected $fillable = [
         'name',
         'fuel_type_id',
+        'station_id',
         'capacity',
         'current_volume',
     ];
@@ -58,6 +61,14 @@ class Tank extends Model
         }
 
         return round((float) $this->current_volume / (float) $this->capacity * 100, 1);
+    }
+
+    /**
+     * @return BelongsTo<Station, $this>
+     */
+    public function station(): BelongsTo
+    {
+        return $this->belongsTo(Station::class);
     }
 
     /**

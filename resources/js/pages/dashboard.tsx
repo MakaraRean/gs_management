@@ -1,5 +1,5 @@
-import { Head } from '@inertiajs/react';
-import { DollarSign, Droplets, Receipt, Wallet } from 'lucide-react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { DollarSign, Droplets, Fuel, Receipt, Wallet } from 'lucide-react';
 import { useLocale } from '@/hooks/use-locale';
 import {
     Area,
@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { StatCard } from '@/components/stat-card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Table,
@@ -23,6 +24,7 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency, formatDateTime, formatVolume } from '@/lib/format';
 import { dashboard } from '@/routes';
+import { show as onboardingShow } from '@/routes/onboarding';
 
 type Stats = {
     today_revenue: number;
@@ -77,12 +79,36 @@ export default function Dashboard({
     revenueByDay,
 }: DashboardProps) {
     const { t } = useLocale();
+    const { has_station: hasStation } = usePage().props as {
+        has_station?: boolean;
+    };
 
     return (
         <>
             <Head title={t('dashboard.title')} />
 
             <div className="flex flex-1 flex-col gap-4 p-4">
+                {!hasStation && (
+                    <div className="flex flex-col items-start justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 sm:flex-row sm:items-center dark:border-amber-700 dark:bg-amber-950">
+                        <div className="flex items-start gap-3">
+                            <Fuel className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                            <div>
+                                <p className="font-medium">
+                                    {t('dashboard.no_station_title')}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    {t('dashboard.no_station_description')}
+                                </p>
+                            </div>
+                        </div>
+                        <Button asChild size="sm">
+                            <Link href={onboardingShow()}>
+                                {t('dashboard.no_station_cta')}
+                            </Link>
+                        </Button>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <StatCard
                         title={t('dashboard.today_revenue')}
@@ -110,7 +136,9 @@ export default function Dashboard({
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle>{t('dashboard.revenue_last_7_days')}</CardTitle>
+                            <CardTitle>
+                                {t('dashboard.revenue_last_7_days')}
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="h-64 w-full">
@@ -254,9 +282,15 @@ export default function Dashboard({
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>{t('common.when')}</TableHead>
-                                        <TableHead>{t('common.pump')}</TableHead>
-                                        <TableHead>{t('common.fuel')}</TableHead>
+                                        <TableHead>
+                                            {t('common.when')}
+                                        </TableHead>
+                                        <TableHead>
+                                            {t('common.pump')}
+                                        </TableHead>
+                                        <TableHead>
+                                            {t('common.fuel')}
+                                        </TableHead>
                                         <TableHead className="text-right">
                                             {t('common.volume')}
                                         </TableHead>

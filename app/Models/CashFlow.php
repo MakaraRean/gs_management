@@ -2,17 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\HasActiveScope;
+use Database\Factories\CashFlowFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CashFlow extends Model
 {
-    /** @use HasFactory<\Database\Factories\CashFlowFactory> */
-    use HasFactory;
+    /** @use HasFactory<CashFlowFactory> */
+    use HasActiveScope, HasFactory;
 
     protected $fillable = [
         'user_id',
+        'station_id',
         'direction',
         'category',
         'amount',
@@ -37,5 +40,13 @@ class CashFlow extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return BelongsTo<Station, $this>
+     */
+    public function station(): BelongsTo
+    {
+        return $this->belongsTo(Station::class);
     }
 }

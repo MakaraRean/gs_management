@@ -2,19 +2,23 @@
 
 namespace App\Models;
 
+use App\Traits\HasActiveScope;
+use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Sale extends Model
 {
-    /** @use HasFactory<\Database\Factories\SaleFactory> */
-    use HasFactory;
+    /** @use HasFactory<SaleFactory> */
+    use HasActiveScope, HasFactory;
 
     protected $fillable = [
         'pump_id',
         'fuel_type_id',
         'user_id',
+        'station_id',
+        'customer_id',
         'volume',
         'unit_price',
         'total_amount',
@@ -34,6 +38,22 @@ class Sale extends Model
             'total_amount' => 'decimal:2',
             'sold_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Station, $this>
+     */
+    public function station(): BelongsTo
+    {
+        return $this->belongsTo(Station::class);
+    }
+
+    /**
+     * @return BelongsTo<Customer, $this>
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     /**
