@@ -10,13 +10,17 @@ import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes';
 import businessStore from '@/routes/onboarding/business';
 
-export default function OnboardingIndex() {
+type Props = {
+    defaults: { name: string; email: string };
+};
+
+export default function OnboardingIndex({ defaults }: Props) {
     const { t } = useLocale();
 
     const { data, setData, post, processing, errors } = useForm({
-        name: '',
+        name: defaults.name,
         phone: '',
-        email: '',
+        email: defaults.email,
         address: '',
         customers_per_station: false,
     });

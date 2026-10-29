@@ -24,7 +24,10 @@ class OnboardingTest extends TestCase
         $this->actingAs($user)
             ->get(route('onboarding.show'))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('onboarding/index'));
+            ->assertInertia(fn ($page) => $page
+                ->component('onboarding/index')
+                ->where('defaults.name', $user->name)
+                ->where('defaults.email', $user->email));
     }
 
     public function test_user_with_business_is_redirected_to_dashboard(): void

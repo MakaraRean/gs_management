@@ -16,7 +16,12 @@ class OnboardingController extends Controller
             return to_route('dashboard');
         }
 
-        return Inertia::render('onboarding/index');
+        return Inertia::render('onboarding/index', [
+            'defaults' => [
+                'name' => $request->user()->name,
+                'email' => $request->user()->email,
+            ],
+        ]);
     }
 
     public function storeBusiness(BusinessRequest $request): RedirectResponse
