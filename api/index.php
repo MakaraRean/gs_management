@@ -9,8 +9,9 @@ use Monolog\Formatter\LineFormatter;
  * Vercel's filesystem is read-only outside /tmp and there are no queue
  * workers, so these defaults keep Laravel from writing to the project
  * directory. Vercel's log viewer only keeps the tail of long output, so
- * errors are logged on one line without a stack trace. Anything set in
- * the Vercel project environment wins.
+ * errors are logged on one line without a stack trace. The Aiven MySQL
+ * connection is verified against the committed project CA. Anything set
+ * in the Vercel project environment wins.
  */
 $vercelEnvironmentDefaults = [
     'APP_CONFIG_CACHE' => '/tmp/config.php',
@@ -23,6 +24,7 @@ $vercelEnvironmentDefaults = [
     'LOG_STDERR_FORMATTER' => LineFormatter::class,
     'QUEUE_CONNECTION' => 'sync',
     'SESSION_SECURE_COOKIE' => 'true',
+    'MYSQL_ATTR_SSL_CA' => dirname(__DIR__).'/database/certs/aiven-ca.pem',
 ];
 
 foreach ($vercelEnvironmentDefaults as $key => $value) {
