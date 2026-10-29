@@ -1,7 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
-    FolderGit2,
     Fuel,
     LayoutGrid,
     LineChart,
@@ -13,10 +12,9 @@ import {
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { LanguageSwitcher } from '@/components/language-switcher';
-import { StationSwitcher } from '@/components/station-switcher';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
+import { StationSwitcher } from '@/components/station-switcher';
 import {
     Sidebar,
     SidebarContent,
@@ -37,19 +35,6 @@ import { index as salesIndex } from '@/routes/sales';
 import { index as stationsIndex } from '@/routes/stations';
 import { index as teamIndex } from '@/routes/team';
 import type { NavItem } from '@/types';
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
 
 export function AppSidebar() {
     const { t } = useLocale();
@@ -126,7 +111,6 @@ export function AppSidebar() {
                 <div className="px-2 pb-1">
                     <LanguageSwitcher />
                 </div>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
                 <p className="px-2 pt-1 text-center text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden">
                     v{version}
