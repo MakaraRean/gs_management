@@ -34,3 +34,6 @@ yarn-error.log
 
 error_log
 public/error_log
+
+/.vercel
+.env.vercel

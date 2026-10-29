@@ -1,0 +1,29 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "framework": null,
+    "installCommand": "",
+    "buildCommand": "test -f public/build/manifest.json || (echo 'public/build is missing: run npm run build and commit it' && exit 1)",
+    "outputDirectory": "public",
+    "regions": ["sin1"],
+    "functions": {
+        "api/index.php": {
+            "runtime": "vercel-php@0.9.0",
+            "excludeFiles": "{tests/**,public/build/assets/**,public/images/**}"
+        }
+    },
+    "routes": [
+        {
+            "src": "/build/assets/(.*)",
+            "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
+            "dest": "/build/assets/$1"
+        },
+        {
+            "src": "/(favicon\\.ico|favicon\\.svg|apple-touch-icon\\.png|robots\\.txt|images/.*)",
+            "dest": "/$1"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/api/index.php"
+        }
+    ]
+}

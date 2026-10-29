@@ -1,0 +1,28 @@
+# Installed on Vercel by the vercel-php runtime (composer install --no-dev)
+/vendor
+/node_modules
+
+# Local-only state that would leak secrets or break the deployment
+.env
+.env.*
+/public/hot
+/public/storage
+/public/fonts-manifest.dev.json
+/bootstrap/cache/*.php
+/bootstrap/ssr
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/database/*.sqlite
+/database/*.sqlite-journal
+
+# Not needed at runtime
+/tests
+/deploy
+/.phpunit.cache
+/.claude
+/.idea
+/.vscode
+/.fleet
+/.zed
