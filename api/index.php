@@ -1,13 +1,16 @@
 <?php
 
 use Illuminate\Http\Middleware\TrustProxies;
+use Monolog\Formatter\LineFormatter;
 
 /**
  * Vercel entry point (vercel-php runtime).
  *
  * Vercel's filesystem is read-only outside /tmp and there are no queue
  * workers, so these defaults keep Laravel from writing to the project
- * directory. Anything set in the Vercel project environment wins.
+ * directory. Vercel's log viewer only keeps the tail of long output, so
+ * errors are logged on one line without a stack trace. Anything set in
+ * the Vercel project environment wins.
  */
 $vercelEnvironmentDefaults = [
     'APP_CONFIG_CACHE' => '/tmp/config.php',
@@ -17,6 +20,7 @@ $vercelEnvironmentDefaults = [
     'APP_SERVICES_CACHE' => '/tmp/services.php',
     'VIEW_COMPILED_PATH' => '/tmp/views',
     'LOG_CHANNEL' => 'stderr',
+    'LOG_STDERR_FORMATTER' => LineFormatter::class,
     'QUEUE_CONNECTION' => 'sync',
     'SESSION_SECURE_COOKIE' => 'true',
 ];
