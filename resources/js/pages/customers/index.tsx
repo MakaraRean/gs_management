@@ -47,16 +47,22 @@ export default function CustomersIndex({ customers, customersPerStation }: Custo
 
     const multipleStations = (stations as unknown[]).length > 1;
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const defaultStationId: string | null =
+        customersPerStation && current_station
+            ? String((current_station as { id: number }).id)
+            : null;
+
+    const blankCustomer = {
         name: '',
         phone: '',
         email: '',
         notes: '',
         credit_limit: '0',
-        station_id: customersPerStation && current_station
-            ? String((current_station as { id: number }).id)
-            : null as string | null,
-    });
+        station_id: defaultStationId,
+    };
+
+    const { data, setData, post, processing, errors, clearErrors } =
+        useForm(blankCustomer);
 
     const isStationOnly = data.station_id !== null;
 
@@ -67,11 +73,8 @@ export default function CustomersIndex({ customers, customersPerStation }: Custo
     };
 
     const openCreate = () => {
-        reset();
-        // Re-apply default after reset
-        setData('station_id', customersPerStation && current_station
-            ? String((current_station as { id: number }).id)
-            : null);
+        setData(blankCustomer);
+        clearErrors();
         setOpen(true);
     };
 

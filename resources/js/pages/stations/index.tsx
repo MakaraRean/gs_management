@@ -38,19 +38,27 @@ type StationsProps = {
 
 export default function StationsIndex({ stations }: StationsProps) {
     const { t } = useLocale();
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(
+        () =>
+            typeof window !== 'undefined' &&
+            new URLSearchParams(window.location.search).has('new'),
+    );
     const [editing, setEditing] = useState<Station | null>(null);
 
-    const { data, setData, post, put, processing, errors, reset } = useForm({
+    const blankStation = {
         name: '',
         phone: '',
         email: '',
         address: '',
-    });
+    };
+
+    const { data, setData, post, put, processing, errors, clearErrors } =
+        useForm(blankStation);
 
     const openCreate = () => {
-        reset();
         setEditing(null);
+        setData(blankStation);
+        clearErrors();
         setOpen(true);
     };
 

@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency, formatDateTime, formatVolume } from '@/lib/format';
 import { dashboard } from '@/routes';
-import { show as onboardingShow } from '@/routes/onboarding';
+import { index as stationsIndex } from '@/routes/stations';
 
 type Stats = {
     today_revenue: number;
@@ -102,7 +102,7 @@ export default function Dashboard({
                             </div>
                         </div>
                         <Button asChild size="sm">
-                            <Link href={onboardingShow()}>
+                            <Link href={stationsIndex({ query: { new: 1 } })}>
                                 {t('dashboard.no_station_cta')}
                             </Link>
                         </Button>

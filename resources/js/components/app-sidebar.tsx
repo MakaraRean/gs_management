@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
     FolderGit2,
@@ -53,6 +53,7 @@ const footerNavItems: NavItem[] = [
 
 export function AppSidebar() {
     const { t } = useLocale();
+    const version = usePage().props.version;
 
     const mainNavItems: NavItem[] = [
         {
@@ -127,6 +128,9 @@ export function AppSidebar() {
                 </div>
                 <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
+                <p className="px-2 pt-1 text-center text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden">
+                    v{version}
+                </p>
             </SidebarFooter>
         </Sidebar>
     );

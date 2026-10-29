@@ -42,16 +42,20 @@ export default function FuelTypes({ fuelTypes }: FuelTypesProps) {
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<FuelType | null>(null);
 
-    const { data, setData, post, put, processing, errors, reset } = useForm({
+    const blankFuelType = {
         name: '',
         unit_price: '',
         unit: 'L',
         color: '#2563eb',
-    });
+    };
+
+    const { data, setData, post, put, processing, errors, clearErrors } =
+        useForm(blankFuelType);
 
     const openCreate = () => {
-        reset();
         setEditing(null);
+        setData(blankFuelType);
+        clearErrors();
         setOpen(true);
     };
 

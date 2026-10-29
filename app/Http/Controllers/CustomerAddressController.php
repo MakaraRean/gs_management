@@ -12,25 +12,22 @@ class CustomerAddressController extends Controller
 {
     public function store(AddressRequest $request, Customer $customer): RedirectResponse
     {
+        $this->authorizeCustomer($customer);
+
         $data = $request->validated();
 
-        $label = $data['label'] ?? 'home';
-        $isDefault = (bool) ($data['is_default'] ?? false);
-
-        $addressData = array_intersect_key($data, array_flip(['street', 'city', 'province', 'country']));
-        $address = Address::create(array_merge(['country' => 'KH'], $addressData));
-
-        if ($isDefault) {
-            $customer->addresses()->newPivotQuery()
-                ->where('customer_id', $customer->id)
-                ->update(['is_default' => false]);
+        if (! empty($data['address_id'])) {
+            $address = Address::findOrFail($data['address_id']);
+        } else {
+            $address = Address::create([
+                'street' => $data['street'] ?? null,
+                'city' => $data['city'] ?? null,
+                'province' => $data['province'] ?? null,
+                'country' => $data['country'] ?? 'KH',
+            ]);
         }
 
-        $customer->addresses()->attach($address->id, [
-            'label' => $label,
-            'is_default' => $isDefault,
-            'is_active' => true,
-        ]);
+        $customer->update(['address_id' => $address->id]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('addresses.created')]);
 
@@ -39,21 +36,14 @@ class CustomerAddressController extends Controller
 
     public function update(AddressRequest $request, Customer $customer, Address $address): RedirectResponse
     {
+        $this->authorizeCustomer($customer);
+
         $data = $request->validated();
-        $isDefault = (bool) ($data['is_default'] ?? false);
-
-        $addressData = array_intersect_key($data, array_flip(['street', 'city', 'province', 'country']));
-        $address->update($addressData);
-
-        if ($isDefault) {
-            $customer->addresses()->newPivotQuery()
-                ->where('customer_id', $customer->id)
-                ->update(['is_default' => false]);
-        }
-
-        $customer->addresses()->updateExistingPivot($address->id, [
-            'label' => $data['label'] ?? 'home',
-            'is_default' => $isDefault,
+        $address->update([
+            'street' => $data['street'] ?? null,
+            'city' => $data['city'] ?? null,
+            'province' => $data['province'] ?? null,
+            'country' => $data['country'] ?? 'KH',
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('addresses.updated')]);
@@ -61,12 +51,19 @@ class CustomerAddressController extends Controller
         return to_route('customers.show', $customer);
     }
 
-    public function destroy(Customer $customer, Address $address): RedirectResponse
+    public function destroy(Customer $customer): RedirectResponse
     {
-        $customer->addresses()->updateExistingPivot($address->id, ['is_active' => false]);
+        $this->authorizeCustomer($customer);
+
+        $customer->update(['address_id' => null]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('addresses.unlinked')]);
 
         return to_route('customers.show', $customer);
+    }
+
+    private function authorizeCustomer(Customer $customer): void
+    {
+        abort_unless($customer->business_id === $this->currentBusiness()->id, 403);
     }
 }

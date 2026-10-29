@@ -60,16 +60,20 @@ export default function Tanks({ tanks, fuelTypes }: TanksProps) {
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<Tank | null>(null);
 
-    const { data, setData, post, put, processing, errors, reset } = useForm({
+    const blankTank = {
         name: '',
         fuel_type_id: '',
         capacity: '',
         current_volume: '',
-    });
+    };
+
+    const { data, setData, post, put, processing, errors, clearErrors } =
+        useForm(blankTank);
 
     const openCreate = () => {
-        reset();
         setEditing(null);
+        setData(blankTank);
+        clearErrors();
         setOpen(true);
     };
 

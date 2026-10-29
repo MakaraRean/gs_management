@@ -62,13 +62,22 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
     const [to, setTo] = useState(filters.to);
     const [open, setOpen] = useState(false);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const blankCashFlow = {
         direction: 'out',
         category: 'expense',
         amount: '',
         description: '',
         occurred_at: '',
-    });
+    };
+
+    const { data, setData, post, processing, errors, clearErrors } =
+        useForm(blankCashFlow);
+
+    const openCreate = () => {
+        setData(blankCashFlow);
+        clearErrors();
+        setOpen(true);
+    };
 
     const CATEGORY_LABELS: Record<string, string> = {
         sale: t('cash_flow.category_sale'),
@@ -91,7 +100,8 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
         event.preventDefault();
         post(store().url, {
             onSuccess: () => {
-                reset();
+                setData(blankCashFlow);
+                clearErrors();
                 setOpen(false);
             },
         });
@@ -113,7 +123,7 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <h1 className="text-xl font-semibold">{t('cash_flow.title')}</h1>
                     <Button
-                        onClick={() => setOpen(true)}
+                        onClick={openCreate}
                         className="w-full sm:w-auto"
                     >
                         <Plus className="h-4 w-4" />

@@ -88,10 +88,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
             Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
-            // Customer addresses
-            Route::post('customers/{customer}/addresses', [CustomerAddressController::class, 'store'])->name('customers.addresses.store');
-            Route::put('customers/{customer}/addresses/{address}', [CustomerAddressController::class, 'update'])->name('customers.addresses.update');
-            Route::delete('customers/{customer}/addresses/{address}', [CustomerAddressController::class, 'destroy'])->name('customers.addresses.destroy');
+            // Customer address (one shared address per customer)
+            Route::post('customers/{customer}/address', [CustomerAddressController::class, 'store'])->name('customers.address.store');
+            Route::put('customers/{customer}/address/{address}', [CustomerAddressController::class, 'update'])->name('customers.address.update');
+            Route::delete('customers/{customer}/address', [CustomerAddressController::class, 'destroy'])->name('customers.address.destroy');
 
             // Customer payments
             Route::post('customers/{customer}/payments', [CustomerPaymentController::class, 'store'])->name('customers.payments.store');

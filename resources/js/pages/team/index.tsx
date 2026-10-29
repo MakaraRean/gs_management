@@ -54,12 +54,14 @@ export default function TeamIndex({ business, members, isOwner }: TeamProps) {
     const [memberOpen, setMemberOpen] = useState(false);
     const [businessOpen, setBusinessOpen] = useState(false);
 
-    const memberForm = useForm({
+    const blankMember = {
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
-    });
+    };
+
+    const memberForm = useForm(blankMember);
 
     const businessForm = useForm({
         name: business.name,
@@ -70,7 +72,7 @@ export default function TeamIndex({ business, members, isOwner }: TeamProps) {
     });
 
     const openAddMember = () => {
-        memberForm.reset();
+        memberForm.setData(blankMember);
         memberForm.clearErrors();
         setMemberOpen(true);
     };

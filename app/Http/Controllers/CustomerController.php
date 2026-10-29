@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CustomerRequest;
+use App\Models\Address;
 use App\Models\Customer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -33,11 +34,15 @@ class CustomerController extends Controller
 
     public function show(Customer $customer): Response
     {
-        abort_unless($customer->business_id === $this->currentBusiness()->id, 403);
+        $business = $this->currentBusiness();
+        abort_unless($customer->business_id === $business->id, 403);
 
-        $customer->load([
-            'addresses',
-        ]);
+        $customer->load('address');
+
+        $availableAddresses = Address::whereHas(
+            'customers',
+            fn ($query) => $query->where('business_id', $business->id)
+        )->orderByDesc('id')->get();
 
         $creditSales = $customer->sales()
             ->where('payment_method', 'credit')
@@ -54,6 +59,7 @@ class CustomerController extends Controller
             'customer' => array_merge($customer->toArray(), [
                 'outstanding_balance' => $customer->outstandingBalance(),
             ]),
+            'availableAddresses' => $availableAddresses,
             'creditSales' => $creditSales,
             'payments' => $payments,
         ]);

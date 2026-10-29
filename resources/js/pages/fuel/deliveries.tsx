@@ -59,21 +59,25 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
     const { t } = useLocale();
     const [open, setOpen] = useState(false);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const blankDelivery = {
         tank_id: '',
         volume: '',
         cost_per_unit: '',
         supplier: '',
         delivered_at: '',
         notes: '',
-    });
+    };
+
+    const { data, setData, post, processing, errors, clearErrors } =
+        useForm(blankDelivery);
 
     const volume = Number.parseFloat(data.volume) || 0;
     const cost = Number.parseFloat(data.cost_per_unit) || 0;
     const total = volume * cost;
 
     const openCreate = () => {
-        reset();
+        setData(blankDelivery);
+        clearErrors();
         setOpen(true);
     };
 

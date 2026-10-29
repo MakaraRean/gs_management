@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Traits\HasActiveScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Address extends Model
 {
@@ -19,13 +19,10 @@ class Address extends Model
     ];
 
     /**
-     * @return BelongsToMany<Customer, $this>
+     * @return HasMany<Customer, $this>
      */
-    public function customers(): BelongsToMany
+    public function customers(): HasMany
     {
-        return $this->belongsToMany(Customer::class, 'customer_address')
-            ->withPivot(['label', 'is_default', 'is_active'])
-            ->withTimestamps()
-            ->wherePivot('is_active', true);
+        return $this->hasMany(Customer::class);
     }
 }

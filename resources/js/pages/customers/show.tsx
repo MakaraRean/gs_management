@@ -32,7 +32,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, formatDateTime } from '@/lib/format';
 import { index } from '@/routes/customers';
-import { store as storeAddress, update as updateAddress, destroy as destroyAddress } from '@/routes/customers/addresses';
+import { store as storeAddress, update as updateAddress, destroy as destroyAddress } from '@/routes/customers/address';
 import { store as storePayment, destroy as destroyPayment } from '@/routes/customers/payments';
 
 type Address = {
@@ -41,8 +41,10 @@ type Address = {
     city: string | null;
     province: string | null;
     country: string;
-    pivot: { label: string; is_default: boolean };
 };
+
+const formatAddress = (address: Address): string =>
+    [address.street, address.city, address.province].filter(Boolean).join(', ') || '—';
 
 type CreditSale = {
     id: number;
@@ -74,53 +76,67 @@ type Customer = {
     notes: string | null;
     credit_limit: string;
     outstanding_balance: number;
-    addresses: Address[];
+    address: Address | null;
 };
 
 type CustomerShowProps = {
     customer: Customer;
+    availableAddresses: Address[];
     creditSales: PaginatedData<CreditSale>;
     payments: PaginatedData<Payment>;
 };
 
-export default function CustomerShow({ customer, creditSales, payments }: CustomerShowProps) {
+export default function CustomerShow({ customer, availableAddresses, creditSales, payments }: CustomerShowProps) {
     const { t } = useLocale();
     const [addressOpen, setAddressOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+    const [addressMode, setAddressMode] = useState<'create' | 'assign'>('create');
     const [paymentOpen, setPaymentOpen] = useState(false);
 
-    const addressForm = useForm({
+    const blankAddress = {
+        address_id: '',
         street: '',
         city: '',
         province: '',
         country: 'KH',
-        label: 'home',
-        is_default: false as boolean,
-    });
+    };
 
-    const paymentForm = useForm({
+    const blankPayment = {
         amount: '',
         payment_method: 'cash',
         notes: '',
         paid_at: '',
-    });
+    };
+
+    const addressForm = useForm(blankAddress);
+
+    const paymentForm = useForm(blankPayment);
 
     const openCreateAddress = () => {
-        addressForm.reset();
         setEditingAddress(null);
+        setAddressMode('create');
+        addressForm.setData(blankAddress);
+        addressForm.clearErrors();
         setAddressOpen(true);
+    };
+
+    const openCreatePayment = () => {
+        paymentForm.setData(blankPayment);
+        paymentForm.clearErrors();
+        setPaymentOpen(true);
     };
 
     const openEditAddress = (address: Address) => {
         setEditingAddress(address);
+        setAddressMode('create');
         addressForm.setData({
+            address_id: '',
             street: address.street ?? '',
             city: address.city ?? '',
             province: address.province ?? '',
             country: address.country,
-            label: address.pivot.label,
-            is_default: address.pivot.is_default,
         });
+        addressForm.clearErrors();
         setAddressOpen(true);
     };
 
@@ -138,9 +154,9 @@ export default function CustomerShow({ customer, creditSales, payments }: Custom
         }
     };
 
-    const removeAddress = (address: Address) => {
+    const removeAddress = () => {
         if (confirm(t('addresses.delete_confirm'))) {
-            router.delete(destroyAddress({ customer: customer.id, address: address.id }).url, {
+            router.delete(destroyAddress({ customer: customer.id }).url, {
                 preserveScroll: true,
             });
         }
@@ -159,12 +175,6 @@ export default function CustomerShow({ customer, creditSales, payments }: Custom
                 preserveScroll: true,
             });
         }
-    };
-
-    const labelTranslations: Record<string, string> = {
-        home: t('addresses.labels.home'),
-        work: t('addresses.labels.work'),
-        other: t('addresses.labels.other'),
     };
 
     const paymentMethodLabels: Record<string, string> = {
@@ -202,66 +212,49 @@ export default function CustomerShow({ customer, creditSales, payments }: Custom
                         <TabsTrigger value="payments">{t('customers.payment_history')}</TabsTrigger>
                     </TabsList>
 
-                    {/* Addresses Tab */}
+                    {/* Address Tab */}
                     <TabsContent value="addresses" className="space-y-4 pt-4">
                         <div className="flex items-center justify-between">
                             <h3 className="font-medium">{t('addresses.title')}</h3>
-                            <Button size="sm" onClick={openCreateAddress}>
-                                <Plus className="h-4 w-4" />
-                                {t('addresses.new_address')}
-                            </Button>
+                            {!customer.address && (
+                                <Button size="sm" onClick={openCreateAddress}>
+                                    <Plus className="h-4 w-4" />
+                                    {t('addresses.new_address')}
+                                </Button>
+                            )}
                         </div>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>{t('addresses.label')}</TableHead>
-                                    <TableHead>{t('addresses.street')}</TableHead>
-                                    <TableHead>{t('addresses.city')}</TableHead>
-                                    <TableHead>{t('addresses.province')}</TableHead>
-                                    <TableHead className="text-right">{t('common.actions')}</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {customer.addresses.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center text-muted-foreground">
-                                            {t('addresses.new_address')}
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                                {customer.addresses.map((address) => (
-                                    <TableRow key={address.id}>
-                                        <TableCell>
-                                            <span className="flex items-center gap-1.5">
-                                                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                                                {labelTranslations[address.pivot.label] ?? address.pivot.label}
-                                                {address.pivot.is_default && (
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        {t('addresses.is_default')}
-                                                    </Badge>
-                                                )}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground">{address.street ?? '—'}</TableCell>
-                                        <TableCell className="text-muted-foreground">{address.city ?? '—'}</TableCell>
-                                        <TableCell className="text-muted-foreground">{address.province ?? '—'}</TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => openEditAddress(address)}>
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive"
-                                                onClick={() => removeAddress(address)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        {customer.address ? (
+                            <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
+                                <div className="flex items-start gap-2">
+                                    <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                                    <div className="space-y-0.5">
+                                        <p className="font-medium">{customer.address.street ?? '—'}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {[customer.address.city, customer.address.province, customer.address.country]
+                                                .filter(Boolean)
+                                                .join(', ') || '—'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex shrink-0">
+                                    <Button variant="ghost" size="icon" onClick={() => openEditAddress(customer.address!)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-destructive"
+                                        onClick={removeAddress}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                                {t('addresses.no_address')}
+                            </p>
+                        )}
                     </TabsContent>
 
                     {/* Credit Sales Tab */}
@@ -308,7 +301,7 @@ export default function CustomerShow({ customer, creditSales, payments }: Custom
                     <TabsContent value="payments" className="space-y-4 pt-4">
                         <div className="flex items-center justify-between">
                             <h3 className="font-medium">{t('customers.payment_history')}</h3>
-                            <Button size="sm" onClick={() => setPaymentOpen(true)}>
+                            <Button size="sm" onClick={openCreatePayment}>
                                 <Plus className="h-4 w-4" />
                                 {t('customers.record_payment')}
                             </Button>
@@ -370,49 +363,81 @@ export default function CustomerShow({ customer, creditSales, payments }: Custom
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={submitAddress} className="space-y-4">
-                        <div className="grid gap-2">
-                            <Label>{t('addresses.label')}</Label>
-                            <Select
-                                value={addressForm.data.label}
-                                onValueChange={(v) => addressForm.setData('label', v)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="home">{t('addresses.labels.home')}</SelectItem>
-                                    <SelectItem value="work">{t('addresses.labels.work')}</SelectItem>
-                                    <SelectItem value="other">{t('addresses.labels.other')}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="street">{t('addresses.street')}</Label>
-                            <Input
-                                id="street"
-                                value={addressForm.data.street}
-                                onChange={(e) => addressForm.setData('street', e.target.value)}
-                            />
-                            <InputError message={addressForm.errors.street} />
-                        </div>
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="grid gap-2">
-                                <Label htmlFor="city">{t('addresses.city')}</Label>
-                                <Input
-                                    id="city"
-                                    value={addressForm.data.city}
-                                    onChange={(e) => addressForm.setData('city', e.target.value)}
-                                />
+                        {!editingAddress && availableAddresses.length > 0 && (
+                            <div className="grid grid-cols-2 gap-2 rounded-md bg-muted p-1">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={addressMode === 'create' ? 'default' : 'ghost'}
+                                    onClick={() => setAddressMode('create')}
+                                >
+                                    {t('addresses.create_new')}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={addressMode === 'assign' ? 'default' : 'ghost'}
+                                    onClick={() => setAddressMode('assign')}
+                                >
+                                    {t('addresses.assign_existing')}
+                                </Button>
                             </div>
+                        )}
+
+                        {!editingAddress && addressMode === 'assign' ? (
                             <div className="grid gap-2">
-                                <Label htmlFor="province">{t('addresses.province')}</Label>
-                                <Input
-                                    id="province"
-                                    value={addressForm.data.province}
-                                    onChange={(e) => addressForm.setData('province', e.target.value)}
-                                />
+                                <Label>{t('addresses.title')}</Label>
+                                <Select
+                                    value={addressForm.data.address_id}
+                                    onValueChange={(v) => addressForm.setData('address_id', v)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={t('addresses.select_address')} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableAddresses.map((address) => (
+                                            <SelectItem key={address.id} value={String(address.id)}>
+                                                {formatAddress(address)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={addressForm.errors.address_id} />
                             </div>
-                        </div>
+                        ) : (
+                            <>
+                                {editingAddress && (
+                                    <p className="text-xs text-muted-foreground">{t('addresses.shared_note')}</p>
+                                )}
+                                <div className="grid gap-2">
+                                    <Label htmlFor="street">{t('addresses.street')}</Label>
+                                    <Input
+                                        id="street"
+                                        value={addressForm.data.street}
+                                        onChange={(e) => addressForm.setData('street', e.target.value)}
+                                    />
+                                    <InputError message={addressForm.errors.street} />
+                                </div>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="city">{t('addresses.city')}</Label>
+                                        <Input
+                                            id="city"
+                                            value={addressForm.data.city}
+                                            onChange={(e) => addressForm.setData('city', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="province">{t('addresses.province')}</Label>
+                                        <Input
+                                            id="province"
+                                            value={addressForm.data.province}
+                                            onChange={(e) => addressForm.setData('province', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
                         <DialogFooter>
                             <Button type="submit" disabled={addressForm.processing}>
                                 {editingAddress ? t('common.save_changes') : t('common.create')}

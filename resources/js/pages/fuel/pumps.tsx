@@ -58,15 +58,19 @@ export default function Pumps({ pumps, tanks }: PumpsProps) {
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<Pump | null>(null);
 
-    const { data, setData, post, put, processing, errors, reset } = useForm({
+    const blankPump = {
         name: '',
         tank_id: '',
         status: 'active',
-    });
+    };
+
+    const { data, setData, post, put, processing, errors, clearErrors } =
+        useForm(blankPump);
 
     const openCreate = () => {
-        reset();
         setEditing(null);
+        setData(blankPump);
+        clearErrors();
         setOpen(true);
     };
 

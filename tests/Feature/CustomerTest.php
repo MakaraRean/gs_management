@@ -129,47 +129,73 @@ class CustomerTest extends TestCase
             ->assertInertia(fn ($page) => $page->has('customers', 1));
     }
 
-    public function test_an_address_can_be_linked_to_a_customer(): void
+    public function test_a_new_address_can_be_created_for_a_customer(): void
     {
         $user = User::factory()->create();
         $station = Station::factory()->for(Business::factory()->for($user))->create();
         $customer = Customer::factory()->create(['business_id' => $station->business_id]);
 
-        $this->actingAs($user)->post(route('customers.addresses.store', $customer), [
+        $this->actingAs($user)->post(route('customers.address.store', $customer), [
             'street' => '123 Main St',
             'city' => 'Phnom Penh',
             'province' => 'Phnom Penh',
             'country' => 'KH',
-            'label' => 'home',
-            'is_default' => true,
         ])->assertRedirect(route('customers.show', $customer));
 
         $this->assertDatabaseHas('addresses', ['street' => '123 Main St']);
-        $this->assertDatabaseHas('customer_address', [
-            'customer_id' => $customer->id,
-            'label' => 'home',
-            'is_default' => true,
-            'is_active' => true,
+        $this->assertDatabaseHas('customers', [
+            'id' => $customer->id,
+            'address_id' => Address::where('street', '123 Main St')->value('id'),
         ]);
     }
 
-    public function test_unlinking_an_address_sets_pivot_is_active_false(): void
+    public function test_an_existing_address_can_be_shared_between_customers(): void
     {
         $user = User::factory()->create();
         $station = Station::factory()->for(Business::factory()->for($user))->create();
-        $customer = Customer::factory()->create(['business_id' => $station->business_id]);
         $address = Address::factory()->create();
-        $customer->addresses()->attach($address->id, ['label' => 'home', 'is_default' => false, 'is_active' => true]);
+        $first = Customer::factory()->create(['business_id' => $station->business_id, 'address_id' => $address->id]);
+        $second = Customer::factory()->create(['business_id' => $station->business_id]);
+
+        $this->actingAs($user)->post(route('customers.address.store', $second), [
+            'address_id' => $address->id,
+        ])->assertRedirect(route('customers.show', $second));
+
+        $this->assertSame($address->id, $first->fresh()->address_id);
+        $this->assertSame($address->id, $second->fresh()->address_id);
+    }
+
+    public function test_updating_a_shared_address_affects_all_customers(): void
+    {
+        $user = User::factory()->create();
+        $station = Station::factory()->for(Business::factory()->for($user))->create();
+        $address = Address::factory()->create(['street' => 'Old St']);
+        $first = Customer::factory()->create(['business_id' => $station->business_id, 'address_id' => $address->id]);
+        $second = Customer::factory()->create(['business_id' => $station->business_id, 'address_id' => $address->id]);
+
+        $this->actingAs($user)->put(route('customers.address.update', [$first, $address]), [
+            'street' => 'New St',
+            'city' => 'Siem Reap',
+            'province' => 'Siem Reap',
+            'country' => 'KH',
+        ])->assertRedirect(route('customers.show', $first));
+
+        $this->assertDatabaseHas('addresses', ['id' => $address->id, 'street' => 'New St']);
+        $this->assertSame('New St', $second->fresh()->address->street);
+    }
+
+    public function test_unlinking_clears_customer_address_id(): void
+    {
+        $user = User::factory()->create();
+        $station = Station::factory()->for(Business::factory()->for($user))->create();
+        $address = Address::factory()->create();
+        $customer = Customer::factory()->create(['business_id' => $station->business_id, 'address_id' => $address->id]);
 
         $this->actingAs($user)
-            ->delete(route('customers.addresses.destroy', [$customer, $address]))
+            ->delete(route('customers.address.destroy', $customer))
             ->assertRedirect(route('customers.show', $customer));
 
-        $this->assertDatabaseHas('customer_address', [
-            'customer_id' => $customer->id,
-            'address_id' => $address->id,
-            'is_active' => false,
-        ]);
+        $this->assertNull($customer->fresh()->address_id);
         $this->assertDatabaseHas('addresses', ['id' => $address->id]);
     }
 

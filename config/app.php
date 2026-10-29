@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | The current release version of the application. Displayed in the UI and
+    | can be overridden per environment via the APP_VERSION variable.
+    |
+    */
+
+    'version' => env('APP_VERSION', '1.0.0'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

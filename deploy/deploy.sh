@@ -28,6 +28,7 @@ echo "==> Creating deployment archive..."
 zip -r "$LOCAL_ZIP" . \
     --exclude "*.git*" \
     --exclude "node_modules/*" \
+    --exclude "public/hot" \
     --exclude "deploy/*" \
     --exclude "tests/*" \
     --exclude ".env*" \
