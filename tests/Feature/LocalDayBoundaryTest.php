@@ -297,20 +297,35 @@ class LocalDayBoundaryTest extends TestCase
         $this->assertEquals(30, $sales->sum('total_amount'));
     }
 
-    public function test_the_migration_converts_stored_delivery_times_to_utc(): void
+    public function test_the_migration_converts_delivery_times_stored_before_the_fix_to_utc(): void
     {
-        $delivery = FuelDelivery::factory()->create([
+        $typedBeforeTheFix = FuelDelivery::factory()->create([
+            'tank_id' => $this->tank->id,
+            'delivered_at' => '2026-10-30 14:00:00',
+            'created_at' => '2026-10-30 07:46:32',
+        ]);
+        $withoutCreatedAt = FuelDelivery::factory()->create([
             'tank_id' => $this->tank->id,
             'delivered_at' => '2026-10-30 20:00:00',
+            'created_at' => null,
+        ]);
+        $storedInUtc = FuelDelivery::factory()->create([
+            'tank_id' => $this->tank->id,
+            'delivered_at' => '2026-10-30 07:50:00',
+            'created_at' => '2026-10-30 07:46:33',
         ]);
         $migration = require database_path('migrations/2026_10_30_050735_convert_fuel_deliveries_delivered_at_to_utc.php');
 
         $migration->up();
 
-        $this->assertDatabaseHas('fuel_deliveries', ['id' => $delivery->id, 'delivered_at' => '2026-10-30 13:00:00']);
+        $this->assertDatabaseHas('fuel_deliveries', ['id' => $typedBeforeTheFix->id, 'delivered_at' => '2026-10-30 07:00:00']);
+        $this->assertDatabaseHas('fuel_deliveries', ['id' => $withoutCreatedAt->id, 'delivered_at' => '2026-10-30 13:00:00']);
+        $this->assertDatabaseHas('fuel_deliveries', ['id' => $storedInUtc->id, 'delivered_at' => '2026-10-30 07:50:00']);
 
         $migration->down();
 
-        $this->assertDatabaseHas('fuel_deliveries', ['id' => $delivery->id, 'delivered_at' => '2026-10-30 20:00:00']);
+        $this->assertDatabaseHas('fuel_deliveries', ['id' => $typedBeforeTheFix->id, 'delivered_at' => '2026-10-30 14:00:00']);
+        $this->assertDatabaseHas('fuel_deliveries', ['id' => $withoutCreatedAt->id, 'delivered_at' => '2026-10-30 20:00:00']);
+        $this->assertDatabaseHas('fuel_deliveries', ['id' => $storedInUtc->id, 'delivered_at' => '2026-10-30 07:50:00']);
     }
 }
