@@ -25,7 +25,7 @@ export default function AuthSimpleLayout({
                         >
                             <div className="mb-1 flex h-16 w-16 items-center justify-center rounded-md">
                                 <img
-                                    src="/images/logo.jpg"
+                                    src="/images/logo.jpeg"
                                     alt="Gas Station Logo"
                                     className="size-16 object-contain"
                                 />
