@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sale;
+use App\Support\LocalTime;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -12,15 +12,15 @@ class SalesAnalysisController extends Controller
 {
     public function index(Request $request): Response
     {
-        $from = $request->date('from') ?? Carbon::today()->subDays(29);
-        $to = $request->date('to') ?? Carbon::today();
+        $from = $request->date('from') ?? LocalTime::today()->subDays(29);
+        $to = $request->date('to') ?? LocalTime::today();
 
-        $range = [$from->copy()->startOfDay(), $to->copy()->endOfDay()];
+        $range = LocalTime::dayRange($from, $to);
 
         $base = fn () => Sale::query()->whereBetween('sold_at', $range);
 
         $revenueByDay = $base()
-            ->selectRaw('DATE(sold_at) as day, SUM(total_amount) as revenue, SUM(volume) as volume, COUNT(*) as transactions')
+            ->selectRaw(LocalTime::dateSql('sold_at').' as day, SUM(total_amount) as revenue, SUM(volume) as volume, COUNT(*) as transactions')
             ->groupBy('day')
             ->orderBy('day')
             ->get()

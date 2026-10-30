@@ -81,6 +81,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Local Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Dates are stored in UTC, but the stations keep local time. This zone
+    | decides which calendar day a sale or cash entry belongs to on pages
+    | and reports, and how dates typed into forms are read.
+    |
+    */
+
+    'local_timezone' => env('APP_LOCAL_TIMEZONE', 'Asia/Phnom_Penh'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

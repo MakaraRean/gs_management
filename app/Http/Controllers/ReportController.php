@@ -6,8 +6,9 @@ use App\Models\CashFlow;
 use App\Models\FuelDelivery;
 use App\Models\Sale;
 use App\Models\Tank;
+use App\Support\LocalTime;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,8 +17,8 @@ class ReportController extends Controller
     public function index(Request $request): Response
     {
         $type = $request->string('type')->toString() ?: 'daily_sales';
-        $from = $request->date('from') ?? Carbon::today()->subDays(29);
-        $to = $request->date('to') ?? Carbon::today();
+        $from = $request->date('from') ?? LocalTime::today()->subDays(29);
+        $to = $request->date('to') ?? LocalTime::today();
 
         $report = match ($type) {
             'inventory' => $this->inventoryReport(),
@@ -35,11 +36,11 @@ class ReportController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function dailySalesReport(Carbon $from, Carbon $to): array
+    private function dailySalesReport(CarbonInterface $from, CarbonInterface $to): array
     {
         $rows = Sale::query()
-            ->whereBetween('sold_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
-            ->selectRaw('DATE(sold_at) as date, COUNT(*) as transactions, SUM(volume) as volume, SUM(total_amount) as revenue')
+            ->whereBetween('sold_at', LocalTime::dayRange($from, $to))
+            ->selectRaw(LocalTime::dateSql('sold_at').' as date, COUNT(*) as transactions, SUM(volume) as volume, SUM(total_amount) as revenue')
             ->groupBy('date')
             ->orderByDesc('date')
             ->get()
@@ -101,9 +102,9 @@ class ReportController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function cashFlowReport(Carbon $from, Carbon $to): array
+    private function cashFlowReport(CarbonInterface $from, CarbonInterface $to): array
     {
-        $range = [$from->copy()->startOfDay(), $to->copy()->endOfDay()];
+        $range = LocalTime::dayRange($from, $to);
 
         $cashSales = (float) Sale::query()->where('payment_method', 'cash')->whereBetween('sold_at', $range)->sum('total_amount');
         $cardSales = (float) Sale::query()->where('payment_method', 'card')->whereBetween('sold_at', $range)->sum('total_amount');

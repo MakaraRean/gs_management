@@ -7,9 +7,10 @@ use App\Models\CashFlow;
 use App\Models\FuelDelivery;
 use App\Models\Sale;
 use App\Models\Station;
+use App\Support\LocalTime;
+use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,8 +19,8 @@ class CashFlowController extends Controller
 {
     public function index(Request $request): Response
     {
-        $from = $request->date('from') ?? Carbon::today()->subDays(29);
-        $to = $request->date('to') ?? Carbon::today();
+        $from = $request->date('from') ?? LocalTime::today()->subDays(29);
+        $to = $request->date('to') ?? LocalTime::today();
         $station = $this->currentStation();
 
         $entries = $this->ledger($from, $to, $station);
@@ -45,6 +46,7 @@ class CashFlowController extends Controller
     {
         CashFlow::create([
             ...$request->validated(),
+            'occurred_at' => LocalTime::toUtc($request->validated('occurred_at')),
             'user_id' => $request->user()?->id,
             'station_id' => $this->currentStation()->id,
         ]);
@@ -70,13 +72,15 @@ class CashFlowController extends Controller
      *
      * @return Collection<int, array<string, mixed>>
      */
-    private function ledger(Carbon $from, Carbon $to, Station $station): Collection
+    private function ledger(CarbonInterface $from, CarbonInterface $to, Station $station): Collection
     {
+        $range = LocalTime::dayRange($from, $to);
+
         $cashSales = Sale::query()
             ->where('station_id', $station->id)
             ->where('payment_method', 'cash')
-            ->whereBetween('sold_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
-            ->selectRaw('DATE(sold_at) as day, SUM(total_amount) as total')
+            ->whereBetween('sold_at', $range)
+            ->selectRaw(LocalTime::dateSql('sold_at').' as day, SUM(total_amount) as total')
             ->groupBy('day')
             ->get()
             ->map(fn ($row): array => [
@@ -92,11 +96,11 @@ class CashFlowController extends Controller
         $deliveries = FuelDelivery::query()
             ->whereHas('tank', fn ($q) => $q->where('station_id', $station->id))
             ->with('tank:id,name')
-            ->whereBetween('delivered_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
+            ->whereBetween('delivered_at', $range)
             ->get()
             ->map(fn (FuelDelivery $delivery): array => [
                 'id' => 'delivery-'.$delivery->id,
-                'date' => $delivery->delivered_at->toDateString(),
+                'date' => LocalTime::dateOf($delivery->delivered_at),
                 'direction' => 'out',
                 'category' => 'fuel_purchase',
                 'description' => trim(__('Fuel delivery to :tank', ['tank' => $delivery->tank->name]).($delivery->supplier ? ' — '.$delivery->supplier : '')),
@@ -106,11 +110,11 @@ class CashFlowController extends Controller
 
         $manual = CashFlow::query()
             ->where('station_id', $station->id)
-            ->whereBetween('occurred_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
+            ->whereBetween('occurred_at', $range)
             ->get()
             ->map(fn (CashFlow $entry): array => [
                 'id' => $entry->id,
-                'date' => $entry->occurred_at->toDateString(),
+                'date' => LocalTime::dateOf($entry->occurred_at),
                 'direction' => $entry->direction,
                 'category' => $entry->category,
                 'description' => $entry->description,
