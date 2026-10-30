@@ -37,3 +37,8 @@ public/error_log
 
 /.vercel
 .env.vercel
+
+// Ignore all agents
+.agents
+.claude
+.codex

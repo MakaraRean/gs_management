@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CustomerPaymentRequest;
+use App\Http\Requests\RequestDeletionRequest;
 use App\Models\CashFlow;
 use App\Models\Customer;
 use App\Models\CustomerPayment;
 use App\Support\LocalTime;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class CustomerPaymentController extends Controller
@@ -44,14 +46,29 @@ class CustomerPaymentController extends Controller
         return to_route('customers.show', $customer);
     }
 
-    public function destroy(Customer $customer, CustomerPayment $payment): RedirectResponse
+    public function destroy(Request $request, Customer $customer, CustomerPayment $payment): RedirectResponse
     {
         abort_unless($customer->business_id === $this->currentBusiness()->id, 403);
+        abort_unless($payment->customer_id === $customer->id, 404);
 
-        $payment->deactivate();
+        $payment->deleteApprovedBy($request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('credit.payment_deleted')]);
 
         return to_route('customers.show', $customer);
+    }
+
+    public function requestDeletion(RequestDeletionRequest $request, Customer $customer, CustomerPayment $payment): RedirectResponse
+    {
+        $business = $this->currentBusiness();
+
+        abort_unless($customer->business_id === $business->id, 403);
+        abort_unless($payment->customer_id === $customer->id, 404);
+
+        $payment->requestDeletion($request->user(), $request->validated('reason'), $business, $this->currentStation());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('deletion_requests.sent')]);
+
+        return back();
     }
 }

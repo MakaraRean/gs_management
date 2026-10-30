@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Permission;
+use App\Models\DeletionRequest;
 use App\Models\Station;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -42,6 +44,7 @@ class HandleInertiaRequests extends Middleware
             'version' => config('app.version'),
             'auth' => [
                 'user' => $request->user(),
+                'permissions' => $request->user()?->permissions() ?? [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'locale' => app()->getLocale(),
@@ -67,6 +70,13 @@ class HandleInertiaRequests extends Middleware
                 $user = $request->user();
 
                 return (bool) ($user?->business && $user->business->user_id === $user->id);
+            },
+            'pending_deletion_requests' => function () use ($request) {
+                $user = $request->user();
+
+                return $user?->hasPermission(Permission::DeleteRecords)
+                    ? DeletionRequest::query()->where('business_id', $user->business_id)->pending()->count()
+                    : 0;
             },
         ];
     }

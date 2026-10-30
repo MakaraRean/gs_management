@@ -98,4 +98,27 @@ class CustomerPaymentTest extends TestCase
 
         $this->assertDatabaseHas('customer_payments', ['id' => $payment->id, 'is_active' => false]);
     }
+
+    public function test_a_payment_cannot_be_destroyed_through_another_customer(): void
+    {
+        $user = User::factory()->create();
+        $business = Business::factory()->for($user)->create();
+        $station = Station::factory()->create(['business_id' => $business->id]);
+        $customer = Customer::factory()->create(['business_id' => $business->id]);
+        $neighbour = Customer::factory()->create(['business_id' => $business->id]);
+        $neighboursPayment = CustomerPayment::factory()->create([
+            'customer_id' => $neighbour->id,
+            'station_id' => $station->id,
+        ]);
+        $otherBusinessPayment = CustomerPayment::factory()->create();
+
+        foreach ([$neighboursPayment, $otherBusinessPayment] as $payment) {
+            $this->actingAs($user)
+                ->withUnencryptedCookie('station_id', $station->id)
+                ->delete(route('customers.payments.destroy', [$customer, $payment]))
+                ->assertNotFound();
+
+            $this->assertDatabaseHas('customer_payments', ['id' => $payment->id, 'is_active' => true]);
+        }
+    }
 }

@@ -2,6 +2,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocale } from '@/hooks/use-locale';
+import { DeleteRecordAction } from '@/components/delete-record-action';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ import { formatCurrency, formatDateTime } from '@/lib/format';
 import { index } from '@/routes/customers';
 import { store as storeAddress, update as updateAddress, destroy as destroyAddress } from '@/routes/customers/address';
 import { store as storePayment, destroy as destroyPayment } from '@/routes/customers/payments';
+import { store as requestPaymentDeletion } from '@/routes/customers/payments/deletion-request';
 
 type Address = {
     id: number;
@@ -61,6 +63,7 @@ type Payment = {
     amount: string;
     payment_method: string;
     notes: string | null;
+    deletion_pending: boolean;
 };
 
 type PaginatedData<T> = {
@@ -337,14 +340,14 @@ export default function CustomerShow({ customer, availableAddresses, creditSales
                                             {formatCurrency(payment.amount)}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive"
-                                                onClick={() => removePayment(payment)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            <DeleteRecordAction
+                                                compact
+                                                pending={payment.deletion_pending}
+                                                requestUrl={
+                                                    requestPaymentDeletion({ customer: customer.id, payment: payment.id }).url
+                                                }
+                                                onDelete={() => removePayment(payment)}
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 ))}

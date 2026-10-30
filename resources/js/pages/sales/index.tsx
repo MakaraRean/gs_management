@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
+import { DeleteRecordAction } from '@/components/delete-record-action';
 import { useLocale } from '@/hooks/use-locale';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency, formatDateTime, formatVolume } from '@/lib/format';
 import { create, destroy, index } from '@/routes/sales';
+import { store as requestSaleDeletion } from '@/routes/sales/deletion-request';
 
 type SaleRow = {
     id: number;
@@ -35,6 +37,7 @@ type SaleRow = {
     pump: { name: string } | null;
     fuel_type: { name: string; unit: string } | null;
     user: { name: string } | null;
+    deletion_pending: boolean;
 };
 
 type Paginated<T> = {
@@ -198,15 +201,11 @@ export default function SalesIndex({
                                         {sale.payment_method}
                                     </Badge>
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-destructive"
-                                    onClick={() => removeSale(sale.id)}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                    {t('common.delete')}
-                                </Button>
+                                <DeleteRecordAction
+                                    pending={sale.deletion_pending}
+                                    requestUrl={requestSaleDeletion({ sale: sale.id }).url}
+                                    onDelete={() => removeSale(sale.id)}
+                                />
                             </CardContent>
                         </Card>
                     ))}
@@ -276,16 +275,12 @@ export default function SalesIndex({
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive"
-                                                onClick={() =>
-                                                    removeSale(sale.id)
-                                                }
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            <DeleteRecordAction
+                                                compact
+                                                pending={sale.deletion_pending}
+                                                requestUrl={requestSaleDeletion({ sale: sale.id }).url}
+                                                onDelete={() => removeSale(sale.id)}
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 ))}

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RequestDeletionRequest;
 use App\Http\Requests\StoreSaleRequest;
 use App\Models\Customer;
 use App\Models\FuelType;
@@ -30,6 +31,7 @@ class SaleController extends Controller
         $sales = Sale::query()
             ->where('station_id', $station->id)
             ->with(['pump:id,name', 'fuelType:id,name,unit', 'user:id,name'])
+            ->withExists('pendingDeletionRequest as deletion_pending')
             ->when($filters['from'], fn ($query, $from) => $query->where('sold_at', '>=', LocalTime::startOfDay($from)))
             ->when($filters['to'], fn ($query, $to) => $query->where('sold_at', '<=', LocalTime::endOfDay($to)))
             ->when($filters['fuel_type_id'], fn ($query, $id) => $query->where('fuel_type_id', $id))
@@ -109,14 +111,27 @@ class SaleController extends Controller
         return to_route('sales.index');
     }
 
-    public function destroy(Sale $sale): RedirectResponse
+    public function destroy(Request $request, Sale $sale): RedirectResponse
     {
         abort_unless($sale->station_id === $this->currentStation()->id, 403);
 
-        $sale->deactivate();
+        $sale->deleteApprovedBy($request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Sale deleted.')]);
 
         return to_route('sales.index');
+    }
+
+    public function requestDeletion(RequestDeletionRequest $request, Sale $sale): RedirectResponse
+    {
+        $station = $this->currentStation();
+
+        abort_unless($sale->station_id === $station->id, 403);
+
+        $sale->requestDeletion($request->user(), $request->validated('reason'), $this->currentBusiness(), $station);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('deletion_requests.sent')]);
+
+        return back();
     }
 }

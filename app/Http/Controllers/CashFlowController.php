@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CashFlowRequest;
+use App\Http\Requests\RequestDeletionRequest;
 use App\Models\CashFlow;
 use App\Models\FuelDelivery;
 use App\Models\Sale;
@@ -56,15 +57,28 @@ class CashFlowController extends Controller
         return to_route('cash-flow.index');
     }
 
-    public function destroy(CashFlow $cashFlow): RedirectResponse
+    public function destroy(Request $request, CashFlow $cashFlow): RedirectResponse
     {
         abort_unless($cashFlow->station_id === $this->currentStation()->id, 403);
 
-        $cashFlow->deactivate();
+        $cashFlow->deleteApprovedBy($request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Cash entry deleted.')]);
 
         return to_route('cash-flow.index');
+    }
+
+    public function requestDeletion(RequestDeletionRequest $request, CashFlow $cashFlow): RedirectResponse
+    {
+        $station = $this->currentStation();
+
+        abort_unless($cashFlow->station_id === $station->id, 403);
+
+        $cashFlow->requestDeletion($request->user(), $request->validated('reason'), $this->currentBusiness(), $station);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('deletion_requests.sent')]);
+
+        return back();
     }
 
     /**
@@ -111,6 +125,7 @@ class CashFlowController extends Controller
         $manual = CashFlow::query()
             ->where('station_id', $station->id)
             ->whereBetween('occurred_at', $range)
+            ->withExists('pendingDeletionRequest as deletion_pending')
             ->get()
             ->map(fn (CashFlow $entry): array => [
                 'id' => $entry->id,
@@ -120,6 +135,7 @@ class CashFlowController extends Controller
                 'description' => $entry->description,
                 'amount' => round((float) $entry->amount, 2),
                 'is_manual' => true,
+                'deletion_pending' => $entry->deletion_pending,
             ]);
 
         return $cashSales

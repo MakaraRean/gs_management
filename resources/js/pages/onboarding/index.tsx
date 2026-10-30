@@ -43,7 +43,7 @@ export default function OnboardingIndex({ defaults }: Props) {
                     <div className="flex flex-col items-center gap-4">
                         <div className="flex h-16 w-16 items-center justify-center rounded-md">
                             <img
-                                src="/images/logo.jpg"
+                                src="/images/logo.jpeg"
                                 alt="Gas Station Logo"
                                 className="size-16 object-contain"
                             />

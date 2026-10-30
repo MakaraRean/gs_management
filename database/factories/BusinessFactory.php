@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Role;
 use App\Models\Business;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -29,7 +30,7 @@ class BusinessFactory extends Factory
     }
 
     /**
-     * Make the owner a member of the business they created (membership scoping).
+     * Make the owner an admin member of the business they created (membership scoping).
      */
     public function configure(): static
     {
@@ -37,7 +38,7 @@ class BusinessFactory extends Factory
             $owner = $business->user;
 
             if ($owner && $owner->business_id === null) {
-                $owner->forceFill(['business_id' => $business->id])->save();
+                $owner->forceFill(['business_id' => $business->id, 'role' => Role::Admin])->save();
             }
         });
     }

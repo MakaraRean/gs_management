@@ -3,7 +3,7 @@ export default function AppLogo() {
         <>
             <div className="flex aspect-square size-8 items-center justify-center rounded-md overflow-hidden">
                 <img
-                    src="/images/logo.jpg"
+                    src="/images/logo.jpeg"
                     alt="Gas Station Logo"
                     className="size-8 object-contain"
                 />

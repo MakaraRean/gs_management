@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Permission;
 use Closure;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,7 +18,11 @@ class EnsureHasStation
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->user()?->business?->stations()->exists()) {
-            Inertia::flash('toast', ['type' => 'info', 'message' => __('onboarding.station_required')]);
+            $message = $request->user()?->hasPermission(Permission::Stations)
+                ? __('onboarding.station_required')
+                : __('onboarding.station_required_staff');
+
+            Inertia::flash('toast', ['type' => 'info', 'message' => $message]);
 
             return redirect()->route('dashboard');
         }

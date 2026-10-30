@@ -13,6 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { usePermissions } from '@/hooks/use-permissions';
 import { formatCurrency, formatVolume } from '@/lib/format';
 import { create, index, store } from '@/routes/sales';
 
@@ -39,6 +40,7 @@ type CreateSaleProps = {
 
 export default function CreateSale({ pumps, customers }: CreateSaleProps) {
     const { t } = useLocale();
+    const { can } = usePermissions();
     const { data, setData, post, processing, errors } = useForm({
         pump_id: '',
         volume: '',
@@ -72,7 +74,7 @@ export default function CreateSale({ pumps, customers }: CreateSaleProps) {
                     <CardContent>
                         {pumps.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
-                                {t('sales.no_pumps')}
+                                {t(can('fuel_management') ? 'sales.no_pumps' : 'sales.no_pumps_ask_admin')}
                             </p>
                         ) : (
                             <form onSubmit={submit} className="space-y-5">

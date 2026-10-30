@@ -33,10 +33,15 @@ export function formatDate(value: string | null | undefined): string {
         return '—';
     }
 
+    // A date-only value ("2026-10-29") is a calendar day, which JavaScript parses as UTC
+    // midnight; format it in UTC so it shows the same day in every time zone.
+    const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+
     return new Date(value).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
+        timeZone: isDateOnly ? 'UTC' : undefined,
     });
 }
 

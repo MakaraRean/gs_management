@@ -21,6 +21,7 @@ declare module '@inertiajs/core' {
             has_business: boolean;
             has_station: boolean;
             is_business_owner: boolean;
+            pending_deletion_requests: number;
             [key: string]: unknown;
         };
     }
