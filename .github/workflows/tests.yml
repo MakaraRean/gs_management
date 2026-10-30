@@ -59,3 +59,51 @@ jobs:
 
       - name: Tests
         run: ./vendor/bin/phpunit
+
+  # Migrates the production database after a push to main. Vercel holds each
+  # production deployment until this check passes (project settings, Deployment
+  # Checks), so new code goes live only after its migrations have run.
+  migrate:
+    needs: ci
+    # Run even when tests fail, so the check fails instead of being skipped.
+    if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production-database
+    concurrency:
+      group: production-migrations
+      cancel-in-progress: false
+
+    steps:
+      - name: Require passing tests
+        if: ${{ needs.ci.result != 'success' }}
+        run: |
+          echo "Tests did not pass (${{ needs.ci.result }}), so the database was not migrated."
+          exit 1
+
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: none
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
+
+      - name: Run Migrations
+        run: php artisan migrate --force --no-interaction
+        env:
+          APP_ENV: production
+          DB_CONNECTION: mysql
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_ATTR_SSL_CA: database/certs/aiven-ca.pem
