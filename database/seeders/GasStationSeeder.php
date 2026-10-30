@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Role;
 use App\Models\Business;
 use App\Models\CashFlow;
 use App\Models\FuelDelivery;
@@ -21,7 +22,9 @@ class GasStationSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::query()->first();
+        // Seed into the demo owner's account, never into another existing account.
+        $user = User::query()->withInactive()->firstWhere('email', 'test@example.com')
+            ?? User::factory()->create(['name' => 'Test User', 'email' => 'test@example.com']);
 
         $business = Business::create([
             'name' => 'Demo Petroleum',
@@ -30,6 +33,11 @@ class GasStationSeeder extends Seeder
             'address' => 'Phnom Penh',
         ]);
         $business->user()->associate($user)->save();
+        $user->forceFill(['business_id' => $business->id, 'role' => Role::Admin, 'is_active' => true])->save();
+
+        // Demo staff for trying the cashier and gas jockey roles (password: "password").
+        $this->seedDemoStaff($business, 'cashier@example.com', 'Demo Cashier', Role::Cashier);
+        $this->seedDemoStaff($business, 'jockey@example.com', 'Demo Gas Jockey', Role::GasJockey);
 
         $station = Station::create([
             'business_id' => $business->id,
@@ -109,5 +117,21 @@ class GasStationSeeder extends Seeder
             'user_id' => $user?->id,
             'station_id' => $station->id,
         ]);
+    }
+
+    /**
+     * Create or reset a demo staff account, reactivating it if it was removed from a team.
+     */
+    private function seedDemoStaff(Business $business, string $email, string $name, Role $role): void
+    {
+        User::query()->withInactive()->firstOrNew(['email' => $email])
+            ->forceFill([
+                'name' => $name,
+                'password' => 'password',
+                'business_id' => $business->id,
+                'role' => $role,
+                'is_active' => true,
+            ])
+            ->save();
     }
 }

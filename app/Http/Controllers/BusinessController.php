@@ -12,8 +12,6 @@ class BusinessController extends Controller
     {
         $business = $this->currentBusiness();
 
-        abort_unless($business->user_id === $request->user()->id, 403);
-
         $business->update($request->validated());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('businesses.updated')]);

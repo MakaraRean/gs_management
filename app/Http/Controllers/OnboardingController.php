@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Role;
 use App\Http\Requests\BusinessRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class OnboardingController extends Controller
         }
 
         $business = $request->user()->businesses()->create($request->validated());
-        $request->user()->update(['business_id' => $business->id]);
+        $request->user()->update(['business_id' => $business->id, 'role' => Role::Admin]);
 
         // Every business starts with a default station, copied from its own details.
         $station = $business->stations()->create([

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -43,6 +44,36 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is an admin of their business.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => Role::Admin,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a cashier of their business.
+     */
+    public function cashier(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => Role::Cashier,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a gas jockey of their business.
+     */
+    public function gasJockey(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => Role::GasJockey,
         ]);
     }
 

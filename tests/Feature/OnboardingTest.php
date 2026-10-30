@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Role;
 use App\Models\Business;
 use App\Models\Station;
 use App\Models\User;
@@ -57,8 +58,9 @@ class OnboardingTest extends TestCase
         $business = Business::query()->where('name', 'Acme Fuel')->firstOrFail();
         $this->assertSame($user->id, $business->user_id);
 
-        // Creating the business makes the user a member of it.
+        // Creating the business makes the user an admin member of it.
         $this->assertSame($business->id, $user->fresh()->business_id);
+        $this->assertSame(Role::Admin, $user->fresh()->role);
 
         // A default station is created automatically, copied from the business.
         $station = $business->stations()->firstOrFail();

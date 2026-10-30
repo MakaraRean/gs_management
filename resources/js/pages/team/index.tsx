@@ -16,6 +16,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     Table,
     TableBody,
     TableCell,
@@ -25,7 +32,8 @@ import {
 } from '@/components/ui/table';
 import { update as businessUpdate } from '@/routes/business';
 import { index } from '@/routes/team';
-import { destroy as memberDestroy, store as memberStore } from '@/routes/team/members';
+import { destroy as memberDestroy, store as memberStore, update as memberUpdate } from '@/routes/team/members';
+import type { Role } from '@/types';
 
 type Business = {
     id: number;
@@ -40,23 +48,28 @@ type Member = {
     id: number;
     name: string;
     email: string;
+    role: Role | null;
     is_owner: boolean;
+    can_manage: boolean;
 };
 
 type TeamProps = {
     business: Business;
     members: Member[];
-    isOwner: boolean;
+    roles: Role[];
+    canManageTeam: boolean;
 };
 
-export default function TeamIndex({ business, members, isOwner }: TeamProps) {
+export default function TeamIndex({ business, members, roles, canManageTeam }: TeamProps) {
     const { t } = useLocale();
     const [memberOpen, setMemberOpen] = useState(false);
     const [businessOpen, setBusinessOpen] = useState(false);
+    const [loadingBusiness, setLoadingBusiness] = useState(false);
 
     const blankMember = {
         name: '',
         email: '',
+        role: 'cashier' as Role,
         password: '',
         password_confirmation: '',
     };
@@ -77,6 +90,33 @@ export default function TeamIndex({ business, members, isOwner }: TeamProps) {
         setMemberOpen(true);
     };
 
+    const openEditBusiness = () => {
+        // Another admin may have edited the business since this page loaded.
+        router.reload({
+            only: ['business'],
+            onStart: () => setLoadingBusiness(true),
+            onFinish: () => setLoadingBusiness(false),
+            onSuccess: (page) => {
+                // The reload lands elsewhere if this member was removed or signed out meanwhile.
+                if (page.component !== 'team/index') {
+                    return;
+                }
+
+                const latest = page.props.business as Business;
+
+                businessForm.setData({
+                    name: latest.name,
+                    phone: latest.phone ?? '',
+                    email: latest.email ?? '',
+                    address: latest.address ?? '',
+                    customers_per_station: latest.customers_per_station,
+                });
+                businessForm.clearErrors();
+                setBusinessOpen(true);
+            },
+        });
+    };
+
     const submitMember = (event: React.FormEvent) => {
         event.preventDefault();
         memberForm.post(memberStore().url, { onSuccess: () => setMemberOpen(false) });
@@ -93,6 +133,10 @@ export default function TeamIndex({ business, members, isOwner }: TeamProps) {
         }
     };
 
+    const changeRole = (member: Member, role: Role) => {
+        router.patch(memberUpdate({ member: member.id }).url, { role }, { preserveScroll: true });
+    };
+
     return (
         <>
             <Head title={t('team.title')} />
@@ -103,8 +147,8 @@ export default function TeamIndex({ business, members, isOwner }: TeamProps) {
                         <h2 className="text-lg font-medium">{business.name}</h2>
                         <p className="text-sm text-muted-foreground">{t('team.members')}</p>
                     </div>
-                    {isOwner && (
-                        <Button variant="outline" size="sm" onClick={() => setBusinessOpen(true)}>
+                    {canManageTeam && (
+                        <Button variant="outline" size="sm" disabled={loadingBusiness} onClick={openEditBusiness}>
                             <Pencil className="h-4 w-4" />
                             {t('team.edit_business')}
                         </Button>
@@ -117,8 +161,8 @@ export default function TeamIndex({ business, members, isOwner }: TeamProps) {
                             <Users className="h-4 w-4 text-muted-foreground" />
                             {t('team.members')}
                         </h3>
-                        {isOwner && (
-                            <Button size="sm" onClick={openAddMember}>
+                        {canManageTeam && (
+                            <Button size="sm" disabled={loadingBusiness} onClick={openAddMember}>
                                 <Plus className="h-4 w-4" />
                                 {t('team.add_user')}
                             </Button>
@@ -130,13 +174,14 @@ export default function TeamIndex({ business, members, isOwner }: TeamProps) {
                             <TableRow>
                                 <TableHead>{t('team.name')}</TableHead>
                                 <TableHead>{t('team.email')}</TableHead>
+                                <TableHead>{t('team.role')}</TableHead>
                                 <TableHead className="text-right">{t('common.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {members.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                                    <TableCell colSpan={4} className="text-center text-muted-foreground">
                                         {t('team.no_members')}
                                     </TableCell>
                                 </TableRow>
@@ -155,8 +200,33 @@ export default function TeamIndex({ business, members, isOwner }: TeamProps) {
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-muted-foreground">{member.email}</TableCell>
+                                    <TableCell>
+                                        {member.can_manage ? (
+                                            <Select
+                                                value={member.role ?? ''}
+                                                onValueChange={(value) => changeRole(member, value as Role)}
+                                            >
+                                                <SelectTrigger size="sm" className="w-40">
+                                                    <SelectValue placeholder={t('team.no_role')} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {roles.map((role) => (
+                                                        <SelectItem key={role} value={role}>
+                                                            {t(`roles.${role}`)}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            member.role ? (
+                                                <Badge variant="outline">{t(`roles.${member.role}`)}</Badge>
+                                            ) : (
+                                                <span className="text-sm text-muted-foreground">{t('team.no_role')}</span>
+                                            )
+                                        )}
+                                    </TableCell>
                                     <TableCell className="text-right">
-                                        {isOwner && !member.is_owner && (
+                                        {member.can_manage && (
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
@@ -198,6 +268,25 @@ export default function TeamIndex({ business, members, isOwner }: TeamProps) {
                                 onChange={(e) => memberForm.setData('email', e.target.value)}
                             />
                             <InputError message={memberForm.errors.email} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="member_role">{t('team.role')}</Label>
+                            <Select
+                                value={memberForm.data.role}
+                                onValueChange={(value) => memberForm.setData('role', value as Role)}
+                            >
+                                <SelectTrigger id="member_role" className="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {roles.map((role) => (
+                                        <SelectItem key={role} value={role}>
+                                            {t(`roles.${role}`)}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <InputError message={memberForm.errors.role} />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="member_password">{t('team.password')}</Label>

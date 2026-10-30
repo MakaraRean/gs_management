@@ -1,7 +1,8 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { Pencil, Plus, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useLocale } from '@/hooks/use-locale';
+import { DeleteRecordAction } from '@/components/delete-record-action';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/format';
 import { index, destroy, show, store } from '@/routes/customers';
+import { store as requestCustomerDeletion } from '@/routes/customers/deletion-request';
 
 type Customer = {
     id: number;
@@ -33,6 +35,7 @@ type Customer = {
     email: string | null;
     credit_limit: string;
     outstanding_balance: number;
+    deletion_pending: boolean;
 };
 
 type CustomersProps = {
@@ -146,14 +149,12 @@ export default function CustomersIndex({ customers, customersPerStation }: Custo
                                             <Pencil className="h-4 w-4" />
                                         </Link>
                                     </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-destructive"
-                                        onClick={() => remove(customer)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <DeleteRecordAction
+                                        compact
+                                        pending={customer.deletion_pending}
+                                        requestUrl={requestCustomerDeletion({ customer: customer.id }).url}
+                                        onDelete={() => remove(customer)}
+                                    />
                                 </TableCell>
                             </TableRow>
                         ))}

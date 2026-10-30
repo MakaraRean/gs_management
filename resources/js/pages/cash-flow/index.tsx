@@ -3,11 +3,11 @@ import {
     ArrowDownCircle,
     ArrowUpCircle,
     Plus,
-    Trash2,
     Wallet,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocale } from '@/hooks/use-locale';
+import { DeleteRecordAction } from '@/components/delete-record-action';
 import InputError from '@/components/input-error';
 import { StatCard } from '@/components/stat-card';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { destroy, index, store } from '@/routes/cash-flow';
+import { store as requestCashFlowDeletion } from '@/routes/cash-flow/deletion-request';
 
 type LedgerEntry = {
     id: number | string;
@@ -48,6 +49,7 @@ type LedgerEntry = {
     description: string;
     amount: number;
     is_manual: boolean;
+    deletion_pending?: boolean;
 };
 
 type CashFlowProps = {
@@ -236,16 +238,12 @@ export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             {entry.is_manual ? (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-destructive"
-                                                    onClick={() =>
-                                                        remove(entry)
-                                                    }
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                <DeleteRecordAction
+                                                    compact
+                                                    pending={!!entry.deletion_pending}
+                                                    requestUrl={requestCashFlowDeletion({ cashFlow: Number(entry.id) }).url}
+                                                    onDelete={() => remove(entry)}
+                                                />
                                             ) : (
                                                 <span className="text-xs text-muted-foreground">
                                                     {t('common.auto')}

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CustomerRequest;
+use App\Http\Requests\RequestDeletionRequest;
 use App\Models\Address;
 use App\Models\Customer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,6 +17,7 @@ class CustomerController extends Controller
     public function index(): Response
     {
         $customers = $this->customerQuery()
+            ->withExists('pendingDeletionRequest as deletion_pending')
             ->orderBy('name')
             ->get()
             ->map(fn (Customer $c) => [
@@ -24,6 +27,7 @@ class CustomerController extends Controller
                 'email' => $c->email,
                 'credit_limit' => $c->credit_limit,
                 'outstanding_balance' => $c->outstandingBalance(),
+                'deletion_pending' => $c->deletion_pending,
             ]);
 
         return Inertia::render('customers/index', [
@@ -52,6 +56,7 @@ class CustomerController extends Controller
 
         $payments = $customer->payments()
             ->with('user')
+            ->withExists('pendingDeletionRequest as deletion_pending')
             ->orderByDesc('paid_at')
             ->paginate(20, pageName: 'payments_page');
 
@@ -108,15 +113,28 @@ class CustomerController extends Controller
         return to_route('customers.show', $customer);
     }
 
-    public function destroy(Customer $customer): RedirectResponse
+    public function destroy(Request $request, Customer $customer): RedirectResponse
     {
         abort_unless($customer->business_id === $this->currentBusiness()->id, 403);
 
-        $customer->deactivate();
+        $customer->deleteApprovedBy($request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('customers.deleted')]);
 
         return to_route('customers.index');
+    }
+
+    public function requestDeletion(RequestDeletionRequest $request, Customer $customer): RedirectResponse
+    {
+        $business = $this->currentBusiness();
+
+        abort_unless($customer->business_id === $business->id, 403);
+
+        $customer->requestDeletion($request->user(), $request->validated('reason'), $business, $this->currentStation());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('deletion_requests.sent')]);
+
+        return back();
     }
 
     private function customerQuery(): Builder

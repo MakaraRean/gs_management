@@ -6,6 +6,7 @@ import {
     LineChart,
     MapPin,
     Receipt,
+    Trash2,
     Users,
     UsersRound,
     Wallet,
@@ -25,10 +26,12 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useLocale } from '@/hooks/use-locale';
+import { usePermissions } from '@/hooks/use-permissions';
 import { dashboard } from '@/routes';
 import { index as analyticsIndex } from '@/routes/analytics';
 import { index as cashFlowIndex } from '@/routes/cash-flow';
 import { index as customersIndex } from '@/routes/customers';
+import { index as deletionRequestsIndex } from '@/routes/deletion-requests';
 import { index as fuelTanksIndex } from '@/routes/fuel/tanks';
 import { index as reportsIndex } from '@/routes/reports';
 import { index as salesIndex } from '@/routes/sales';
@@ -38,9 +41,11 @@ import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const { t } = useLocale();
-    const version = usePage().props.version;
+    const { can } = usePermissions();
+    const { version, pending_deletion_requests: pendingDeletionRequests } =
+        usePage().props;
 
-    const mainNavItems: NavItem[] = [
+    const navItems: NavItem[] = [
         {
             title: t('nav.dashboard'),
             href: dashboard(),
@@ -50,31 +55,37 @@ export function AppSidebar() {
             title: t('nav.sales'),
             href: salesIndex(),
             icon: Receipt,
+            permission: 'sales',
         },
         {
             title: t('nav.fuel_management'),
             href: fuelTanksIndex(),
             icon: Fuel,
+            permission: 'fuel_management',
         },
         {
             title: t('nav.cash_flow'),
             href: cashFlowIndex(),
             icon: Wallet,
+            permission: 'cash_flow',
         },
         {
             title: t('nav.sales_analysis'),
             href: analyticsIndex(),
             icon: LineChart,
+            permission: 'sales_analysis',
         },
         {
             title: t('nav.reports'),
             href: reportsIndex(),
             icon: BookOpen,
+            permission: 'reports',
         },
         {
             title: t('nav.stations'),
             href: stationsIndex(),
             icon: MapPin,
+            permission: 'stations',
         },
         {
             title: t('nav.team'),
@@ -85,8 +96,20 @@ export function AppSidebar() {
             title: t('nav.customers'),
             href: customersIndex(),
             icon: Users,
+            permission: 'customers',
+        },
+        {
+            title: t('nav.deletion_requests'),
+            href: deletionRequestsIndex(),
+            icon: Trash2,
+            permission: 'delete_records',
+            badge: pendingDeletionRequests as number,
         },
     ];
+
+    const mainNavItems = navItems.filter(
+        (item) => !item.permission || can(item.permission),
+    );
 
     return (
         <Sidebar collapsible="icon" variant="inset">

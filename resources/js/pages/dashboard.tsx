@@ -22,6 +22,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { usePermissions } from '@/hooks/use-permissions';
 import { formatCurrency, formatDateTime, formatVolume } from '@/lib/format';
 import { dashboard } from '@/routes';
 import { index as stationsIndex } from '@/routes/stations';
@@ -79,6 +80,7 @@ export default function Dashboard({
     revenueByDay,
 }: DashboardProps) {
     const { t } = useLocale();
+    const { can } = usePermissions();
     const { has_station: hasStation } = usePage().props as {
         has_station?: boolean;
     };
@@ -97,15 +99,23 @@ export default function Dashboard({
                                     {t('dashboard.no_station_title')}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    {t('dashboard.no_station_description')}
+                                    {t(
+                                        can('stations')
+                                            ? 'dashboard.no_station_description'
+                                            : 'dashboard.no_station_description_staff',
+                                    )}
                                 </p>
                             </div>
                         </div>
-                        <Button asChild size="sm">
-                            <Link href={stationsIndex({ query: { new: 1 } })}>
-                                {t('dashboard.no_station_cta')}
-                            </Link>
-                        </Button>
+                        {can('stations') && (
+                            <Button asChild size="sm">
+                                <Link
+                                    href={stationsIndex({ query: { new: 1 } })}
+                                >
+                                    {t('dashboard.no_station_cta')}
+                                </Link>
+                            </Button>
+                        )}
                     </div>
                 )}
 

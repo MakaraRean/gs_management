@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\HasActiveScope;
+use App\Traits\HasDeletionRequests;
 use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
-    use HasActiveScope, HasFactory;
+    use HasActiveScope, HasDeletionRequests, HasFactory;
 
     protected $fillable = [
         'pump_id',
