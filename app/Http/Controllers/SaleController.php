@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\FuelType;
 use App\Models\Pump;
 use App\Models\Sale;
+use App\Support\LocalTime;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -29,8 +30,8 @@ class SaleController extends Controller
         $sales = Sale::query()
             ->where('station_id', $station->id)
             ->with(['pump:id,name', 'fuelType:id,name,unit', 'user:id,name'])
-            ->when($filters['from'], fn ($query, $from) => $query->whereDate('sold_at', '>=', $from))
-            ->when($filters['to'], fn ($query, $to) => $query->whereDate('sold_at', '<=', $to))
+            ->when($filters['from'], fn ($query, $from) => $query->where('sold_at', '>=', LocalTime::startOfDay($from)))
+            ->when($filters['to'], fn ($query, $to) => $query->where('sold_at', '<=', LocalTime::endOfDay($to)))
             ->when($filters['fuel_type_id'], fn ($query, $id) => $query->where('fuel_type_id', $id))
             ->latest('sold_at')
             ->paginate(20)
@@ -96,7 +97,7 @@ class SaleController extends Controller
                 'unit_price' => $unitPrice,
                 'total_amount' => round($volume * $unitPrice, 2),
                 'payment_method' => $request->input('payment_method'),
-                'sold_at' => $request->date('sold_at') ?? Carbon::now(),
+                'sold_at' => LocalTime::toUtc($request->input('sold_at')) ?? Carbon::now(),
                 'notes' => $request->input('notes'),
             ]);
 

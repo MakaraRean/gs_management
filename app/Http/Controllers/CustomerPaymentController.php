@@ -6,6 +6,7 @@ use App\Http\Requests\CustomerPaymentRequest;
 use App\Models\CashFlow;
 use App\Models\Customer;
 use App\Models\CustomerPayment;
+use App\Support\LocalTime;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 
@@ -16,7 +17,7 @@ class CustomerPaymentController extends Controller
         abort_unless($customer->business_id === $this->currentBusiness()->id, 403);
 
         $data = $request->validated();
-        $paidAt = $data['paid_at'] ?? now();
+        $paidAt = LocalTime::toUtc($data['paid_at'] ?? null) ?? now();
         $stationId = $this->currentStation()->id;
 
         $customer->payments()->create([

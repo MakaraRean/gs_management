@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\FuelDeliveryRequest;
 use App\Models\FuelDelivery;
 use App\Models\Tank;
+use App\Support\LocalTime;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -32,6 +33,7 @@ class FuelDeliveryController extends Controller
     {
         $data = $request->validated();
         $data['total_cost'] = round((float) $data['volume'] * (float) $data['cost_per_unit'], 2);
+        $data['delivered_at'] = LocalTime::toUtc($data['delivered_at']);
 
         DB::transaction(function () use ($data): void {
             $delivery = FuelDelivery::create($data);

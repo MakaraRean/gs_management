@@ -6,8 +6,8 @@ use App\Models\CashFlow;
 use App\Models\FuelDelivery;
 use App\Models\Sale;
 use App\Models\Tank;
+use App\Support\LocalTime;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,9 +19,9 @@ class DashboardController extends Controller
             return Inertia::render('dashboard/locked');
         }
 
-        $today = Carbon::today();
+        $today = LocalTime::today();
 
-        $todaySales = Sale::query()->whereDate('sold_at', $today);
+        $todaySales = Sale::query()->whereBetween('sold_at', LocalTime::dayRange($today, $today));
 
         $cashSales = (float) Sale::query()->where('payment_method', 'cash')->sum('total_amount');
         $deliveries = (float) FuelDelivery::query()->sum('total_cost');
@@ -29,8 +29,8 @@ class DashboardController extends Controller
         $manualOut = (float) CashFlow::query()->where('direction', 'out')->sum('amount');
 
         $revenueByDay = Sale::query()
-            ->where('sold_at', '>=', $today->copy()->subDays(6)->startOfDay())
-            ->selectRaw('DATE(sold_at) as day, SUM(total_amount) as revenue')
+            ->whereBetween('sold_at', LocalTime::dayRange($today->copy()->subDays(6), $today))
+            ->selectRaw(LocalTime::dateSql('sold_at').' as day, SUM(total_amount) as revenue')
             ->groupBy('day')
             ->orderBy('day')
             ->get()
