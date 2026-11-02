@@ -21,10 +21,12 @@ class CustomerPaymentController extends Controller
         $data = $request->validated();
         $paidAt = LocalTime::toUtc($data['paid_at'] ?? null) ?? now();
         $stationId = $this->currentStation()->id;
+        $currencyId = $this->currentCurrency()->id;
 
         $customer->payments()->create([
             'user_id' => $request->user()?->id,
             'station_id' => $stationId,
+            'currency_id' => $currencyId,
             'amount' => $data['amount'],
             'payment_method' => $data['payment_method'],
             'notes' => $data['notes'] ?? null,
@@ -34,6 +36,7 @@ class CustomerPaymentController extends Controller
         CashFlow::create([
             'user_id' => $request->user()?->id,
             'station_id' => $stationId,
+            'currency_id' => $currencyId,
             'direction' => 'in',
             'category' => 'credit_payment',
             'amount' => $data['amount'],

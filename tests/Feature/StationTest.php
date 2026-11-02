@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Business;
+use App\Models\Currency;
 use App\Models\Station;
 use App\Models\User;
+use Database\Factories\CurrencyFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -45,6 +47,82 @@ class StationTest extends TestCase
             'business_id' => $business->id,
             'is_active' => true,
         ]);
+    }
+
+    public function test_a_station_created_without_a_currency_inherits_the_business_currency(): void
+    {
+        $user = User::factory()->create();
+        $business = Business::factory()->for($user)->create();
+
+        $this->actingAs($user)->post(route('stations.store'), ['name' => 'Main Branch'])
+            ->assertRedirect(route('stations.index'));
+
+        $station = Station::query()->where('name', 'Main Branch')->firstOrFail();
+
+        $this->assertNull($station->currency_id);
+        $this->assertSame($business->currency_id, $station->effective_currency->id);
+    }
+
+    public function test_a_station_can_use_a_different_currency_from_its_business(): void
+    {
+        $user = User::factory()->create();
+        Business::factory()->for($user)->create();
+        $khr = CurrencyFactory::seeded('KHR');
+
+        $this->actingAs($user)->post(route('stations.store'), ['name' => 'Border Branch', 'currency_id' => $khr->id])
+            ->assertRedirect(route('stations.index'));
+
+        $station = Station::query()->where('name', 'Border Branch')->firstOrFail();
+
+        $this->assertSame($khr->id, $station->currency_id);
+        $this->assertSame('KHR', $station->effective_currency->code);
+    }
+
+    public function test_a_station_can_switch_currency_and_go_back_to_inheriting(): void
+    {
+        $user = User::factory()->create();
+        $business = Business::factory()->for($user)->create();
+        $station = Station::factory()->for($business)->create(['name' => 'Branch']);
+        $khr = CurrencyFactory::seeded('KHR');
+
+        $this->actingAs($user)->put(route('stations.update', $station), ['name' => 'Branch', 'currency_id' => $khr->id]);
+        $this->assertDatabaseHas('stations', ['id' => $station->id, 'currency_id' => $khr->id]);
+
+        $this->actingAs($user)->put(route('stations.update', $station), ['name' => 'Branch', 'currency_id' => null]);
+        $this->assertDatabaseHas('stations', ['id' => $station->id, 'currency_id' => null]);
+        $this->assertSame($business->currency_id, $station->fresh()->effective_currency->id);
+    }
+
+    public function test_a_station_currency_must_be_an_active_currency(): void
+    {
+        $user = User::factory()->create();
+        Business::factory()->for($user)->create();
+        $retired = Currency::factory()->inactive()->create();
+
+        foreach ([999999, $retired->id] as $currencyId) {
+            $this->actingAs($user)
+                ->from(route('stations.index'))
+                ->post(route('stations.store'), ['name' => 'Bad Branch', 'currency_id' => $currencyId])
+                ->assertSessionHasErrors('currency_id');
+        }
+
+        $this->assertDatabaseMissing('stations', ['name' => 'Bad Branch']);
+    }
+
+    public function test_the_stations_index_exposes_the_business_currency_to_label_inheriting_stations(): void
+    {
+        $user = User::factory()->create();
+        $business = Business::factory()->for($user)->create();
+        $khr = CurrencyFactory::seeded('KHR');
+        Station::factory()->for($business)->create(['name' => 'A Inherits']);
+        Station::factory()->for($business)->create(['name' => 'B Overrides', 'currency_id' => $khr->id]);
+
+        $this->actingAs($user)
+            ->get(route('stations.index'))
+            ->assertInertia(fn ($page) => $page
+                ->where('business_currency_id', $business->currency_id)
+                ->where('stations.0.currency_id', null)
+                ->where('stations.1.currency_id', $khr->id));
     }
 
     public function test_a_station_can_be_updated(): void

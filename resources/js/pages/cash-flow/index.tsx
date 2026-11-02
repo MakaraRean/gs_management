@@ -37,7 +37,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { formatCurrency, formatDate } from '@/lib/format';
+import { useCurrency } from '@/hooks/use-currency';
+import { formatDate } from '@/lib/format';
 import { destroy, index, store } from '@/routes/cash-flow';
 import { store as requestCashFlowDeletion } from '@/routes/cash-flow/deletion-request';
 
@@ -60,6 +61,7 @@ type CashFlowProps = {
 
 export default function CashFlow({ entries, summary, filters }: CashFlowProps) {
     const { t } = useLocale();
+    const { formatCurrency } = useCurrency();
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
     const [open, setOpen] = useState(false);

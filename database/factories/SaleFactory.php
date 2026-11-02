@@ -13,6 +13,16 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class SaleFactory extends Factory
 {
     /**
+     * Stamp the sale with its station's currency unless a test sets one.
+     */
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Sale $sale): void {
+            $sale->currency_id ??= CurrencyFactory::idForStation($sale->station_id);
+        });
+    }
+
+    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>

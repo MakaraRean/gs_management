@@ -19,16 +19,39 @@ class DashboardController extends Controller
             return Inertia::render('dashboard/locked');
         }
 
+        // A business whose stations are all gone has nothing to total yet.
+        if (! app()->bound('current.station')) {
+            return Inertia::render('dashboard', [
+                'stats' => ['today_revenue' => 0, 'today_volume' => 0, 'today_transactions' => 0, 'net_cash' => 0],
+                'tanks' => [],
+                'recentSales' => [],
+                'revenueByDay' => [],
+            ]);
+        }
+
+        $station = $this->currentStation();
+        $currency = $this->currentCurrency();
         $today = LocalTime::today();
 
-        $todaySales = Sale::query()->whereBetween('sold_at', LocalTime::dayRange($today, $today));
+        // Everything is the active station's, in its current currency, so no total mixes currencies.
+        $sales = fn () => Sale::query()->where('station_id', $station->id)->inCurrency($currency);
 
-        $cashSales = (float) Sale::query()->where('payment_method', 'cash')->sum('total_amount');
-        $deliveries = (float) FuelDelivery::query()->sum('total_cost');
-        $manualIn = (float) CashFlow::query()->where('direction', 'in')->sum('amount');
-        $manualOut = (float) CashFlow::query()->where('direction', 'out')->sum('amount');
+        $todaySales = $sales()->whereBetween('sold_at', LocalTime::dayRange($today, $today));
 
-        $revenueByDay = Sale::query()
+        $cashSales = (float) $sales()->where('payment_method', 'cash')->sum('total_amount');
+        $deliveries = (float) FuelDelivery::query()
+            ->whereHas('tank', fn ($query) => $query->where('station_id', $station->id))
+            ->inCurrency($currency)
+            ->sum('total_cost');
+        $manualCashFlows = fn (string $direction) => (float) CashFlow::query()
+            ->where('station_id', $station->id)
+            ->inCurrency($currency)
+            ->where('direction', $direction)
+            ->sum('amount');
+        $manualIn = $manualCashFlows('in');
+        $manualOut = $manualCashFlows('out');
+
+        $revenueByDay = $sales()
             ->whereBetween('sold_at', LocalTime::dayRange($today->copy()->subDays(6), $today))
             ->selectRaw(LocalTime::dateSql('sold_at').' as day, SUM(total_amount) as revenue')
             ->groupBy('day')
@@ -36,17 +59,18 @@ class DashboardController extends Controller
             ->get()
             ->map(fn ($row): array => [
                 'day' => $row->day,
-                'revenue' => round((float) $row->revenue, 2),
+                'revenue' => $currency->round($row->revenue),
             ]);
 
         return Inertia::render('dashboard', [
             'stats' => [
-                'today_revenue' => round((float) $todaySales->clone()->sum('total_amount'), 2),
+                'today_revenue' => $currency->round($todaySales->clone()->sum('total_amount')),
                 'today_volume' => round((float) $todaySales->clone()->sum('volume'), 2),
                 'today_transactions' => $todaySales->clone()->count(),
-                'net_cash' => round($cashSales + $manualIn - $deliveries - $manualOut, 2),
+                'net_cash' => $currency->round($cashSales + $manualIn - $deliveries - $manualOut),
             ],
             'tanks' => Tank::query()
+                ->where('station_id', $station->id)
                 ->with('fuelType:id,name,unit')
                 ->orderBy('name')
                 ->get()
@@ -59,7 +83,7 @@ class DashboardController extends Controller
                     'current_volume' => round((float) $tank->current_volume, 2),
                     'fill_percentage' => $tank->fillPercentage(),
                 ]),
-            'recentSales' => Sale::query()
+            'recentSales' => $sales()
                 ->with(['pump:id,name', 'fuelType:id,name,unit'])
                 ->latest('sold_at')
                 ->limit(8)

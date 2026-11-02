@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCurrency;
 use App\Traits\HasActiveScope;
 use App\Traits\HasDeletionRequests;
 use Database\Factories\CashFlowFactory;
@@ -12,11 +13,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CashFlow extends Model
 {
     /** @use HasFactory<CashFlowFactory> */
-    use HasActiveScope, HasDeletionRequests, HasFactory;
+    use BelongsToCurrency, HasActiveScope, HasDeletionRequests, HasFactory;
 
     protected $fillable = [
         'user_id',
         'station_id',
+        'currency_id',
         'direction',
         'category',
         'amount',

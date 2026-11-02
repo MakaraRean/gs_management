@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\Role;
 use App\Models\Business;
 use App\Models\CashFlow;
+use App\Models\Currency;
 use App\Models\FuelDelivery;
 use App\Models\FuelType;
 use App\Models\Pump;
@@ -31,6 +32,7 @@ class GasStationSeeder extends Seeder
             'phone' => '012 345 678',
             'email' => 'demo@example.com',
             'address' => 'Phnom Penh',
+            'currency_id' => Currency::query()->where('code', 'USD')->value('id'),
         ]);
         $business->user()->associate($user)->save();
         $user->forceFill(['business_id' => $business->id, 'role' => Role::Admin, 'is_active' => true])->save();
@@ -46,6 +48,7 @@ class GasStationSeeder extends Seeder
             'email' => $business->email,
             'address' => $business->address,
         ]);
+        $currency = $station->effective_currency;
 
         $fuelTypes = collect([
             ['name' => 'Regular 92', 'unit_price' => 1.25, 'color' => '#16a34a'],
@@ -100,12 +103,13 @@ class GasStationSeeder extends Seeder
 
                 Sale::create([
                     'station_id' => $station->id,
+                    'currency_id' => $currency->id,
                     'pump_id' => $pump->id,
                     'fuel_type_id' => $fuelType->id,
                     'user_id' => $user?->id,
                     'volume' => $volume,
                     'unit_price' => $fuelType->unit_price,
-                    'total_amount' => round($volume * (float) $fuelType->unit_price, 2),
+                    'total_amount' => $currency->round($volume * (float) $fuelType->unit_price),
                     'payment_method' => random_int(1, 10) > 4 ? 'cash' : 'card',
                     'sold_at' => $date->copy()->addHours(random_int(6, 22))->addMinutes(random_int(0, 59)),
                 ]);

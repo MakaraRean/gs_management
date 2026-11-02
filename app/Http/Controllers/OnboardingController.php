@@ -35,7 +35,8 @@ class OnboardingController extends Controller
         $business = $request->user()->businesses()->create($request->validated());
         $request->user()->update(['business_id' => $business->id, 'role' => Role::Admin]);
 
-        // Every business starts with a default station, copied from its own details.
+        // Every business starts with a default station, copied from its own details;
+        // it has no currency of its own, so it uses the business's.
         $station = $business->stations()->create([
             'name' => $business->name,
             'phone' => $business->phone,

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCurrency;
 use App\Traits\HasActiveScope;
 use App\Traits\HasDeletionRequests;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,12 +11,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CustomerPayment extends Model
 {
-    use HasActiveScope, HasDeletionRequests, HasFactory;
+    use BelongsToCurrency, HasActiveScope, HasDeletionRequests, HasFactory;
 
     protected $fillable = [
         'customer_id',
         'user_id',
         'station_id',
+        'currency_id',
         'amount',
         'payment_method',
         'notes',

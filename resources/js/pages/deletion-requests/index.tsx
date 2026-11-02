@@ -11,8 +11,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useCurrency } from '@/hooks/use-currency';
 import { useLocale } from '@/hooks/use-locale';
-import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
+import { formatDate, formatDateTime } from '@/lib/format';
 import { approve, index, reject } from '@/routes/deletion-requests';
 
 type DeletionRequestRow = {
@@ -20,6 +21,7 @@ type DeletionRequestRow = {
     type: 'sale' | 'cash_flow' | 'customer' | 'customer_payment';
     label: string | null;
     amount: number | null;
+    currency_id: number | null;
     occurred_at: string | null;
     station: string | null;
     requested_by: string | null;
@@ -35,6 +37,7 @@ export default function DeletionRequestsIndex({
     requests,
 }: DeletionRequestsProps) {
     const { t } = useLocale();
+    const { formatCurrency } = useCurrency();
     const [reviewing, setReviewing] = useState(false);
 
     const review = (url: string) => {
@@ -122,6 +125,7 @@ export default function DeletionRequestsIndex({
                                                 {request.amount !== null &&
                                                     formatCurrency(
                                                         request.amount,
+                                                        request.currency_id,
                                                     )}
                                                 {request.amount !== null &&
                                                     request.occurred_at &&

@@ -19,6 +19,7 @@ class Business extends Model
         'phone',
         'email',
         'address',
+        'currency_id',
         'customers_per_station',
     ];
 
@@ -50,6 +51,16 @@ class Business extends Model
     public function members(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    /**
+     * The base currency of the business, which its stations use unless they set their own.
+     *
+     * @return BelongsTo<Currency, $this>
+     */
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
     }
 
     /**

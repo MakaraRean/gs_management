@@ -21,6 +21,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useCurrency } from '@/hooks/use-currency';
 import { index } from '@/routes/reports';
 
 type Column = { key: string; label: string };
@@ -30,6 +31,8 @@ type Report = {
     columns: Column[];
     rows: Record<string, string | number>[];
     totals: Record<string, string | number> | null;
+    // Keys of the columns and totals that hold money, shown in the station's currency.
+    money_keys: string[];
 };
 
 type ReportsProps = {
@@ -38,8 +41,13 @@ type ReportsProps = {
     report: Report;
 };
 
-function downloadCsv(report: Report): void {
-    const header = report.columns.map((column) => column.label);
+function downloadCsv(report: Report, currencyCode: string | null): void {
+    // Amounts stay plain numbers in the file, so their headers carry the currency instead.
+    const header = report.columns.map((column) =>
+        currencyCode && report.money_keys.includes(column.key)
+            ? `${column.label} (${currencyCode})`
+            : column.label,
+    );
     const lines = report.rows.map((row) =>
         report.columns
             .map((column) => {
@@ -65,6 +73,7 @@ function downloadCsv(report: Report): void {
 
 export default function Reports({ type, filters, report }: ReportsProps) {
     const { t } = useLocale();
+    const { currency, formatCurrency } = useCurrency();
     const [reportType, setReportType] = useState(type);
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
@@ -148,7 +157,7 @@ export default function Reports({ type, filters, report }: ReportsProps) {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => downloadCsv(report)}
+                                onClick={() => downloadCsv(report, currency?.code ?? null)}
                             >
                                 <Download className="h-4 w-4" />
                                 CSV
@@ -189,7 +198,13 @@ export default function Reports({ type, filters, report }: ReportsProps) {
                                     <TableRow key={rowIndex}>
                                         {report.columns.map((column) => (
                                             <TableCell key={column.key}>
-                                                {row[column.key]}
+                                                {report.money_keys.includes(
+                                                    column.key,
+                                                )
+                                                    ? formatCurrency(
+                                                          row[column.key],
+                                                      )
+                                                    : row[column.key]}
                                             </TableCell>
                                         ))}
                                     </TableRow>
@@ -209,7 +224,9 @@ export default function Reports({ type, filters, report }: ReportsProps) {
                                                 {key.replace(/_/g, ' ')}:
                                             </span>
                                             <span className="font-semibold tabular-nums">
-                                                {value}
+                                                {report.money_keys.includes(key)
+                                                    ? formatCurrency(value)
+                                                    : value}
                                             </span>
                                         </div>
                                     ),

@@ -85,7 +85,7 @@ class DeletionRequestController extends Controller
     /**
      * Summarize the record an admin is asked to delete.
      *
-     * @return array{label: string|null, amount: float|null, occurred_at: mixed}
+     * @return array{label: string|null, amount: float|null, currency_id: int|null, occurred_at: mixed}
      */
     private function describe(?Model $record): array
     {
@@ -97,24 +97,28 @@ class DeletionRequestController extends Controller
                     trim($record->volume.' '.$record->fuelType?->unit),
                 ])->filter()->implode(' · '),
                 'amount' => (float) $record->total_amount,
+                'currency_id' => $record->currency_id,
                 'occurred_at' => $record->sold_at,
             ],
             $record instanceof CashFlow => [
                 'label' => $record->description,
                 'amount' => (float) $record->amount,
+                'currency_id' => $record->currency_id,
                 'occurred_at' => $record->occurred_at?->toDateString(),
             ],
             $record instanceof Customer => [
                 'label' => collect([$record->name, $record->phone])->filter()->implode(' · '),
                 'amount' => null,
+                'currency_id' => null,
                 'occurred_at' => null,
             ],
             $record instanceof CustomerPayment => [
                 'label' => $record->customer?->name,
                 'amount' => (float) $record->amount,
+                'currency_id' => $record->currency_id,
                 'occurred_at' => $record->paid_at,
             ],
-            default => ['label' => null, 'amount' => null, 'occurred_at' => null],
+            default => ['label' => null, 'amount' => null, 'currency_id' => null, 'occurred_at' => null],
         };
     }
 }

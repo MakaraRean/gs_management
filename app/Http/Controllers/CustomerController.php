@@ -16,6 +16,8 @@ class CustomerController extends Controller
 {
     public function index(): Response
     {
+        $currency = $this->currentCurrency();
+
         $customers = $this->customerQuery()
             ->withExists('pendingDeletionRequest as deletion_pending')
             ->orderBy('name')
@@ -26,7 +28,7 @@ class CustomerController extends Controller
                 'phone' => $c->phone,
                 'email' => $c->email,
                 'credit_limit' => $c->credit_limit,
-                'outstanding_balance' => $c->outstandingBalance(),
+                'outstanding_balance' => $c->outstandingBalance($currency),
                 'deletion_pending' => $c->deletion_pending,
             ]);
 
@@ -62,7 +64,7 @@ class CustomerController extends Controller
 
         return Inertia::render('customers/show', [
             'customer' => array_merge($customer->toArray(), [
-                'outstanding_balance' => $customer->outstandingBalance(),
+                'outstanding_balance' => $customer->outstandingBalance($this->currentCurrency()),
             ]),
             'availableAddresses' => $availableAddresses,
             'creditSales' => $creditSales,

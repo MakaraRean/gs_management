@@ -16,8 +16,14 @@ class SalesAnalysisController extends Controller
         $to = $request->date('to') ?? LocalTime::today();
 
         $range = LocalTime::dayRange($from, $to);
+        $station = $this->currentStation();
+        $currency = $this->currentCurrency();
 
-        $base = fn () => Sale::query()->whereBetween('sold_at', $range);
+        // The active station's sales in its current currency, so no total mixes currencies.
+        $base = fn () => Sale::query()
+            ->where('sales.station_id', $station->id)
+            ->inCurrency($currency)
+            ->whereBetween('sold_at', $range);
 
         $revenueByDay = $base()
             ->selectRaw(LocalTime::dateSql('sold_at').' as day, SUM(total_amount) as revenue, SUM(volume) as volume, COUNT(*) as transactions')
@@ -26,7 +32,7 @@ class SalesAnalysisController extends Controller
             ->get()
             ->map(fn ($row): array => [
                 'day' => $row->day,
-                'revenue' => round((float) $row->revenue, 2),
+                'revenue' => $currency->round($row->revenue),
                 'volume' => round((float) $row->volume, 2),
                 'transactions' => (int) $row->transactions,
             ]);
@@ -40,7 +46,7 @@ class SalesAnalysisController extends Controller
             ->map(fn ($row): array => [
                 'name' => $row->name,
                 'color' => $row->color,
-                'revenue' => round((float) $row->revenue, 2),
+                'revenue' => $currency->round($row->revenue),
                 'volume' => round((float) $row->volume, 2),
             ]);
 
@@ -52,7 +58,7 @@ class SalesAnalysisController extends Controller
             ->get()
             ->map(fn ($row): array => [
                 'name' => $row->name,
-                'revenue' => round((float) $row->revenue, 2),
+                'revenue' => $currency->round($row->revenue),
             ]);
 
         $byPayment = $base()
@@ -61,14 +67,14 @@ class SalesAnalysisController extends Controller
             ->get()
             ->map(fn ($row): array => [
                 'name' => $row->payment_method,
-                'revenue' => round((float) $row->revenue, 2),
+                'revenue' => $currency->round($row->revenue),
             ]);
 
         $totals = $base()
             ->selectRaw('SUM(total_amount) as revenue, SUM(volume) as volume, COUNT(*) as transactions')
             ->first();
 
-        $revenue = round((float) ($totals->revenue ?? 0), 2);
+        $revenue = $currency->round($totals->revenue ?? 0);
         $transactions = (int) ($totals->transactions ?? 0);
 
         return Inertia::render('analytics/index', [
@@ -81,7 +87,7 @@ class SalesAnalysisController extends Controller
                 'revenue' => $revenue,
                 'volume' => round((float) ($totals->volume ?? 0), 2),
                 'transactions' => $transactions,
-                'average_ticket' => $transactions > 0 ? round($revenue / $transactions, 2) : 0,
+                'average_ticket' => $transactions > 0 ? $currency->round($revenue / $transactions) : 0,
             ],
         ]);
     }

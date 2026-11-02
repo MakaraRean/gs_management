@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\CashFlow;
+use App\Models\Currency;
 use App\Models\FuelDelivery;
 use App\Models\Sale;
+use App\Models\Station;
 use App\Models\Tank;
 use App\Support\LocalTime;
 use Carbon\CarbonInterface;
@@ -20,10 +22,13 @@ class ReportController extends Controller
         $from = $request->date('from') ?? LocalTime::today()->subDays(29);
         $to = $request->date('to') ?? LocalTime::today();
 
+        $station = $this->currentStation();
+        $currency = $this->currentCurrency();
+
         $report = match ($type) {
-            'inventory' => $this->inventoryReport(),
-            'cash_flow' => $this->cashFlowReport($from, $to),
-            default => $this->dailySalesReport($from, $to),
+            'inventory' => $this->inventoryReport($station),
+            'cash_flow' => $this->cashFlowReport($from, $to, $station, $currency),
+            default => $this->dailySalesReport($from, $to, $station, $currency),
         };
 
         return Inertia::render('reports/index', [
@@ -36,9 +41,11 @@ class ReportController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function dailySalesReport(CarbonInterface $from, CarbonInterface $to): array
+    private function dailySalesReport(CarbonInterface $from, CarbonInterface $to, Station $station, Currency $currency): array
     {
         $rows = Sale::query()
+            ->where('station_id', $station->id)
+            ->inCurrency($currency)
             ->whereBetween('sold_at', LocalTime::dayRange($from, $to))
             ->selectRaw(LocalTime::dateSql('sold_at').' as date, COUNT(*) as transactions, SUM(volume) as volume, SUM(total_amount) as revenue')
             ->groupBy('date')
@@ -48,7 +55,7 @@ class ReportController extends Controller
                 'date' => $row->date,
                 'transactions' => (int) $row->transactions,
                 'volume' => round((float) $row->volume, 2),
-                'revenue' => round((float) $row->revenue, 2),
+                'revenue' => $currency->round($row->revenue),
             ]);
 
         return [
@@ -63,17 +70,19 @@ class ReportController extends Controller
             'totals' => [
                 'transactions' => (int) $rows->sum('transactions'),
                 'volume' => round($rows->sum('volume'), 2),
-                'revenue' => round($rows->sum('revenue'), 2),
+                'revenue' => $currency->round($rows->sum('revenue')),
             ],
+            'money_keys' => ['revenue'],
         ];
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function inventoryReport(): array
+    private function inventoryReport(Station $station): array
     {
         $rows = Tank::query()
+            ->where('station_id', $station->id)
             ->with('fuelType')
             ->orderBy('name')
             ->get()
@@ -96,30 +105,48 @@ class ReportController extends Controller
             ],
             'rows' => $rows,
             'totals' => null,
+            'money_keys' => [],
         ];
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function cashFlowReport(CarbonInterface $from, CarbonInterface $to): array
+    private function cashFlowReport(CarbonInterface $from, CarbonInterface $to, Station $station, Currency $currency): array
     {
         $range = LocalTime::dayRange($from, $to);
 
-        $cashSales = (float) Sale::query()->where('payment_method', 'cash')->whereBetween('sold_at', $range)->sum('total_amount');
-        $cardSales = (float) Sale::query()->where('payment_method', 'card')->whereBetween('sold_at', $range)->sum('total_amount');
-        $deliveries = (float) FuelDelivery::query()->whereBetween('delivered_at', $range)->sum('total_cost');
-        $manualIn = (float) CashFlow::query()->where('direction', 'in')->whereBetween('occurred_at', $range)->sum('amount');
-        $manualOut = (float) CashFlow::query()->where('direction', 'out')->whereBetween('occurred_at', $range)->sum('amount');
+        $sales = fn (string $paymentMethod) => (float) Sale::query()
+            ->where('station_id', $station->id)
+            ->inCurrency($currency)
+            ->where('payment_method', $paymentMethod)
+            ->whereBetween('sold_at', $range)
+            ->sum('total_amount');
+        $manualCashFlows = fn (string $direction) => (float) CashFlow::query()
+            ->where('station_id', $station->id)
+            ->inCurrency($currency)
+            ->where('direction', $direction)
+            ->whereBetween('occurred_at', $range)
+            ->sum('amount');
+
+        $cashSales = $sales('cash');
+        $cardSales = $sales('card');
+        $deliveries = (float) FuelDelivery::query()
+            ->whereHas('tank', fn ($query) => $query->where('station_id', $station->id))
+            ->inCurrency($currency)
+            ->whereBetween('delivered_at', $range)
+            ->sum('total_cost');
+        $manualIn = $manualCashFlows('in');
+        $manualOut = $manualCashFlows('out');
 
         $rows = collect([
-            ['line' => __('Cash fuel sales'), 'direction' => __('In'), 'amount' => round($cashSales, 2)],
-            ['line' => __('Other income (manual)'), 'direction' => __('In'), 'amount' => round($manualIn, 2)],
-            ['line' => __('Fuel purchases'), 'direction' => __('Out'), 'amount' => round($deliveries, 2)],
-            ['line' => __('Expenses (manual)'), 'direction' => __('Out'), 'amount' => round($manualOut, 2)],
+            ['line' => __('Cash fuel sales'), 'direction' => __('In'), 'amount' => $currency->round($cashSales)],
+            ['line' => __('Other income (manual)'), 'direction' => __('In'), 'amount' => $currency->round($manualIn)],
+            ['line' => __('Fuel purchases'), 'direction' => __('Out'), 'amount' => $currency->round($deliveries)],
+            ['line' => __('Expenses (manual)'), 'direction' => __('Out'), 'amount' => $currency->round($manualOut)],
         ]);
 
-        $net = round($cashSales + $manualIn - $deliveries - $manualOut, 2);
+        $net = $currency->round($cashSales + $manualIn - $deliveries - $manualOut);
 
         return [
             'title' => __('Cash Flow Statement'),
@@ -131,8 +158,9 @@ class ReportController extends Controller
             'rows' => $rows,
             'totals' => [
                 'net_cash' => $net,
-                'card_sales' => round($cardSales, 2),
+                'card_sales' => $currency->round($cardSales),
             ],
+            'money_keys' => ['amount', 'net_cash', 'card_sales'],
         ];
     }
 }

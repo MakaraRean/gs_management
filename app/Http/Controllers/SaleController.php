@@ -88,16 +88,19 @@ class SaleController extends Controller
 
         abort_unless($pump->tank->station_id === $this->currentStation()->id, 403);
 
-        DB::transaction(function () use ($request, $pump, $volume, $unitPrice): void {
+        $currency = $this->currentCurrency();
+
+        DB::transaction(function () use ($request, $pump, $volume, $unitPrice, $currency): void {
             Sale::create([
                 'pump_id' => $pump->id,
                 'fuel_type_id' => $pump->tank->fuel_type_id,
                 'user_id' => $request->user()?->id,
                 'station_id' => $pump->tank->station_id,
+                'currency_id' => $currency->id,
                 'customer_id' => $request->input('customer_id'),
                 'volume' => $volume,
                 'unit_price' => $unitPrice,
-                'total_amount' => round($volume * $unitPrice, 2),
+                'total_amount' => $currency->round($volume * $unitPrice),
                 'payment_method' => $request->input('payment_method'),
                 'sold_at' => LocalTime::toUtc($request->input('sold_at')) ?? Carbon::now(),
                 'notes' => $request->input('notes'),

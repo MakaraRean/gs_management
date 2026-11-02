@@ -19,6 +19,7 @@ class StationController extends Controller
                 ->withCount('tanks')
                 ->orderBy('name')
                 ->get(),
+            'business_currency_id' => $this->currentBusiness()->currency_id,
         ]);
     }
 

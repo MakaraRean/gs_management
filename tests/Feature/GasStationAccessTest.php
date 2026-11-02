@@ -65,6 +65,8 @@ class GasStationAccessTest extends TestCase
             'fuel deliveries' => ['fuel.deliveries.index'],
             'cash flow' => ['cash-flow.index'],
             'customers' => ['customers.index'],
+            'analytics' => ['analytics.index'],
+            'reports' => ['reports.index'],
         ];
     }
 
@@ -122,7 +124,7 @@ class GasStationAccessTest extends TestCase
         $user = User::factory()->create();
         Business::factory()->for($user)->create();
 
-        foreach (['stations.index', 'analytics.index', 'reports.index', 'dashboard'] as $routeName) {
+        foreach (['stations.index', 'dashboard'] as $routeName) {
             $this->actingAs($user)
                 ->get(route($routeName))
                 ->assertOk();

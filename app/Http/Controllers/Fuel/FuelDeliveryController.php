@@ -16,13 +16,17 @@ class FuelDeliveryController extends Controller
 {
     public function index(): Response
     {
+        $station = $this->currentStation();
+
         return Inertia::render('fuel/deliveries', [
             'deliveries' => FuelDelivery::query()
+                ->whereHas('tank', fn ($query) => $query->where('station_id', $station->id))
                 ->with('tank.fuelType')
                 ->latest('delivered_at')
                 ->limit(100)
                 ->get(),
             'tanks' => Tank::query()
+                ->where('station_id', $station->id)
                 ->with('fuelType')
                 ->orderBy('name')
                 ->get(['id', 'name', 'fuel_type_id']),
@@ -32,7 +36,16 @@ class FuelDeliveryController extends Controller
     public function store(FuelDeliveryRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $data['total_cost'] = round((float) $data['volume'] * (float) $data['cost_per_unit'], 2);
+
+        abort_unless(
+            Tank::query()->whereKey($data['tank_id'])->where('station_id', $this->currentStation()->id)->exists(),
+            403,
+        );
+
+        $currency = $this->currentCurrency();
+
+        $data['currency_id'] = $currency->id;
+        $data['total_cost'] = $currency->round((float) $data['volume'] * (float) $data['cost_per_unit']);
         $data['delivered_at'] = LocalTime::toUtc($data['delivered_at']);
 
         DB::transaction(function () use ($data): void {

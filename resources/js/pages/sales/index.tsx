@@ -23,7 +23,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { formatCurrency, formatDateTime, formatVolume } from '@/lib/format';
+import { useCurrency } from '@/hooks/use-currency';
+import { formatDateTime, formatVolume } from '@/lib/format';
 import { create, destroy, index } from '@/routes/sales';
 import { store as requestSaleDeletion } from '@/routes/sales/deletion-request';
 
@@ -32,6 +33,7 @@ type SaleRow = {
     volume: string;
     unit_price: string;
     total_amount: string;
+    currency_id: number;
     payment_method: string;
     sold_at: string;
     pump: { name: string } | null;
@@ -66,6 +68,7 @@ export default function SalesIndex({
     fuelTypes,
 }: SalesIndexProps) {
     const { t } = useLocale();
+    const { formatCurrency } = useCurrency();
     const [from, setFrom] = useState(filters.from ?? '');
     const [to, setTo] = useState(filters.to ?? '');
     const [fuelTypeId, setFuelTypeId] = useState(
@@ -183,7 +186,7 @@ export default function SalesIndex({
                                         {sale.fuel_type?.name ?? '—'}
                                     </span>
                                     <span className="font-bold tabular-nums">
-                                        {formatCurrency(sale.total_amount)}
+                                        {formatCurrency(sale.total_amount, sale.currency_id)}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -264,10 +267,10 @@ export default function SalesIndex({
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right tabular-nums">
-                                            {formatCurrency(sale.unit_price)}
+                                            {formatCurrency(sale.unit_price, sale.currency_id)}
                                         </TableCell>
                                         <TableCell className="text-right font-medium tabular-nums">
-                                            {formatCurrency(sale.total_amount)}
+                                            {formatCurrency(sale.total_amount, sale.currency_id)}
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="secondary">

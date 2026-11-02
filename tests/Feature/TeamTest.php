@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\Role;
 use App\Models\Business;
+use App\Models\Currency;
 use App\Models\Station;
 use App\Models\User;
+use Database\Factories\CurrencyFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -163,6 +165,50 @@ class TeamTest extends TestCase
         $this->assertSame('Original Fuel', $business->fresh()->name);
     }
 
+    public function test_the_business_base_currency_can_be_changed_and_inheriting_stations_follow_it(): void
+    {
+        $owner = User::factory()->create();
+        $business = Business::factory()->for($owner)->create();
+        $inheriting = Station::factory()->for($business)->create();
+        $thb = CurrencyFactory::seeded('THB');
+        $overriding = Station::factory()->for($business)->create(['currency_id' => $thb->id]);
+        $khr = CurrencyFactory::seeded('KHR');
+
+        $this->actingAs($owner)
+            ->put(route('business.update'), ['name' => $business->name, 'currency_id' => $khr->id])
+            ->assertRedirect(route('team.index'));
+
+        $this->assertSame($khr->id, $business->fresh()->currency_id);
+        $this->assertSame('KHR', $inheriting->fresh()->effective_currency->code);
+        $this->assertSame('THB', $overriding->fresh()->effective_currency->code);
+    }
+
+    public function test_the_business_base_currency_is_required_and_must_be_active(): void
+    {
+        $owner = User::factory()->create();
+        $business = Business::factory()->for($owner)->create();
+        $retired = Currency::factory()->inactive()->create();
+
+        foreach ([null, $retired->id] as $currencyId) {
+            $this->actingAs($owner)
+                ->from(route('team.index'))
+                ->put(route('business.update'), ['name' => 'Renamed', 'currency_id' => $currencyId])
+                ->assertSessionHasErrors('currency_id');
+        }
+
+        $this->assertNotSame('Renamed', $business->fresh()->name);
+    }
+
+    public function test_team_index_shares_the_business_currency_for_the_edit_form(): void
+    {
+        $owner = User::factory()->create();
+        $business = Business::factory()->for($owner)->create();
+
+        $this->actingAs($owner)
+            ->get(route('team.index'))
+            ->assertInertia(fn ($page) => $page->where('business.currency_id', $business->currency_id));
+    }
+
     public function test_admin_who_is_not_the_owner_can_manage_the_team(): void
     {
         $owner = User::factory()->create();
@@ -189,7 +235,7 @@ class TeamTest extends TestCase
             ->assertRedirect(route('team.index'));
 
         $this->actingAs($admin)
-            ->put(route('business.update'), ['name' => 'Renamed Fuel'])
+            ->put(route('business.update'), ['name' => 'Renamed Fuel', 'currency_id' => $business->currency_id])
             ->assertRedirect(route('team.index'));
 
         $this->assertDatabaseHas('users', [

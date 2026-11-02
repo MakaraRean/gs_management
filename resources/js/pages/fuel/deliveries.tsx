@@ -28,7 +28,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { formatCurrency, formatDate, formatVolume } from '@/lib/format';
+import { useCurrency } from '@/hooks/use-currency';
+import { formatDate, formatVolume } from '@/lib/format';
 import { destroy, store } from '@/routes/fuel/deliveries';
 
 type Delivery = {
@@ -36,6 +37,7 @@ type Delivery = {
     volume: string;
     cost_per_unit: string;
     total_cost: string;
+    currency_id: number;
     supplier: string | null;
     delivered_at: string;
     tank: {
@@ -57,6 +59,7 @@ type DeliveriesProps = {
 
 export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
     const { t } = useLocale();
+    const { formatCurrency } = useCurrency();
     const [open, setOpen] = useState(false);
 
     const blankDelivery = {
@@ -152,10 +155,10 @@ export default function Deliveries({ deliveries, tanks }: DeliveriesProps) {
                                     )}
                                 </TableCell>
                                 <TableCell className="text-right tabular-nums">
-                                    {formatCurrency(delivery.cost_per_unit)}
+                                    {formatCurrency(delivery.cost_per_unit, delivery.currency_id)}
                                 </TableCell>
                                 <TableCell className="text-right font-medium tabular-nums">
-                                    {formatCurrency(delivery.total_cost)}
+                                    {formatCurrency(delivery.total_cost, delivery.currency_id)}
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button

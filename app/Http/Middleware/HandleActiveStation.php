@@ -18,7 +18,7 @@ class HandleActiveStation
         }
 
         $ownStations = Station::query()
-            ->with('business')
+            ->with(['business.currency', 'currency'])
             ->where('business_id', $user->business_id);
 
         $stationId = $request->cookie('station_id');

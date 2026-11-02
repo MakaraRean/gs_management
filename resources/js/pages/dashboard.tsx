@@ -22,8 +22,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useCurrency } from '@/hooks/use-currency';
 import { usePermissions } from '@/hooks/use-permissions';
-import { formatCurrency, formatDateTime, formatVolume } from '@/lib/format';
+import { formatDateTime, formatVolume } from '@/lib/format';
 import { dashboard } from '@/routes';
 import { index as stationsIndex } from '@/routes/stations';
 
@@ -80,6 +81,7 @@ export default function Dashboard({
     revenueByDay,
 }: DashboardProps) {
     const { t } = useLocale();
+    const { currency, formatCurrency } = useCurrency();
     const { can } = usePermissions();
     const { has_station: hasStation } = usePage().props as {
         has_station?: boolean;
@@ -198,7 +200,7 @@ export default function Dashboard({
                                             fontSize={12}
                                             width={48}
                                             tickFormatter={(value) =>
-                                                `$${value}`
+                                                `${currency?.symbol ?? ''}${value}`
                                             }
                                         />
                                         <Tooltip

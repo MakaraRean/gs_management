@@ -13,8 +13,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useCurrency } from '@/hooks/use-currency';
 import { usePermissions } from '@/hooks/use-permissions';
-import { formatCurrency, formatVolume } from '@/lib/format';
+import { formatVolume } from '@/lib/format';
 import { create, index, store } from '@/routes/sales';
 
 type PumpOption = {
@@ -40,6 +41,7 @@ type CreateSaleProps = {
 
 export default function CreateSale({ pumps, customers }: CreateSaleProps) {
     const { t } = useLocale();
+    const { formatCurrency } = useCurrency();
     const { can } = usePermissions();
     const { data, setData, post, processing, errors } = useForm({
         pump_id: '',
