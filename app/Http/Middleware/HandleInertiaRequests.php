@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Permission;
+use App\Models\Currency;
 use App\Models\DeletionRequest;
 use App\Models\Station;
 use Illuminate\Http\Request;
@@ -10,6 +11,11 @@ use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    /**
+     * @var list<string>
+     */
+    private const CURRENCY_FIELDS = ['id', 'code', 'name', 'name_km', 'symbol', 'round_digits', 'is_active'];
+
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -52,8 +58,17 @@ class HandleInertiaRequests extends Middleware
             'current_station' => function () {
                 $s = app()->bound('current.station') ? app('current.station') : null;
 
-                return $s ? ['id' => $s->id, 'name' => $s->name, 'business_id' => $s->business_id] : null;
+                return $s ? [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'business_id' => $s->business_id,
+                    'currency' => $s->effective_currency->only(self::CURRENCY_FIELDS),
+                ] : null;
             },
+            // Records carry only a currency_id; the pages look it up here, so no query joins currencies.
+            'currencies' => fn () => $request->user()
+                ? Currency::query()->orderBy('code')->get(self::CURRENCY_FIELDS)
+                : [],
             'stations' => function () use ($request) {
                 $user = $request->user();
 

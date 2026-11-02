@@ -50,12 +50,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('stations/{station}', [StationController::class, 'destroy'])->name('stations.destroy');
         });
 
-        // Sales analysis
-        Route::get('analytics', [SalesAnalysisController::class, 'index'])->can(Permission::SalesAnalysis)->name('analytics.index');
-
-        // Reports
-        Route::get('reports', [ReportController::class, 'index'])->can(Permission::Reports)->name('reports.index');
-
         // Delete requests raised by members who cannot delete records themselves
         Route::middleware(Authorize::using(Permission::DeleteRecords))->group(function () {
             Route::get('deletion-requests', [DeletionRequestController::class, 'index'])->name('deletion-requests.index');
@@ -64,6 +58,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
         Route::middleware(EnsureHasStation::class)->group(function () {
+            // Sales analysis and reports total the active station's records, so they need a station
+            Route::get('analytics', [SalesAnalysisController::class, 'index'])->can(Permission::SalesAnalysis)->name('analytics.index');
+            Route::get('reports', [ReportController::class, 'index'])->can(Permission::Reports)->name('reports.index');
+
             // Sales
             Route::middleware(Authorize::using(Permission::Sales))->group(function () {
                 Route::get('sales', [SaleController::class, 'index'])->name('sales.index');

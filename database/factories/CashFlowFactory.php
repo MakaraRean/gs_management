@@ -11,6 +11,16 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class CashFlowFactory extends Factory
 {
     /**
+     * Stamp the entry with its station's currency unless a test sets one.
+     */
+    public function configure(): static
+    {
+        return $this->afterMaking(function (CashFlow $cashFlow): void {
+            $cashFlow->currency_id ??= CurrencyFactory::idForStation($cashFlow->station_id);
+        });
+    }
+
+    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\HasActiveScope;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +19,7 @@ class Station extends Model
         'phone',
         'email',
         'address',
+        'currency_id',
     ];
 
     /**
@@ -26,6 +28,26 @@ class Station extends Model
     public function business(): BelongsTo
     {
         return $this->belongsTo(Business::class);
+    }
+
+    /**
+     * The station's own currency; null means it uses its business's currency.
+     *
+     * @return BelongsTo<Currency, $this>
+     */
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
+    }
+
+    /**
+     * The currency new records of this station are recorded in.
+     *
+     * @return Attribute<Currency, never>
+     */
+    protected function effectiveCurrency(): Attribute
+    {
+        return Attribute::get(fn (): Currency => $this->currency ?? $this->business->currency);
     }
 
     /**

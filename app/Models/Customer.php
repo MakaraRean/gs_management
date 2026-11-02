@@ -74,13 +74,19 @@ class Customer extends Model
         return $this->hasMany(CustomerPayment::class);
     }
 
-    public function outstandingBalance(): float
+    /**
+     * What the customer still owes; with a currency, only credit and payments recorded in it count.
+     */
+    public function outstandingBalance(?Currency $currency = null): float
     {
         $credited = (float) $this->sales()
             ->where('payment_method', 'credit')
+            ->when($currency, fn ($query) => $query->inCurrency($currency))
             ->sum('total_amount');
 
-        $paid = (float) $this->payments()->sum('amount');
+        $paid = (float) $this->payments()
+            ->when($currency, fn ($query) => $query->inCurrency($currency))
+            ->sum('amount');
 
         return max(0, $credited - $paid);
     }

@@ -2,6 +2,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocale } from '@/hooks/use-locale';
+import { CurrencySelect } from '@/components/currency-select';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +22,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useCurrency } from '@/hooks/use-currency';
 import { index, destroy, store, update } from '@/routes/stations';
 
 type Station = {
@@ -29,15 +31,21 @@ type Station = {
     phone: string | null;
     email: string | null;
     address: string | null;
+    // Null means the station uses its business's currency.
+    currency_id: number | null;
     tanks_count: number;
 };
 
 type StationsProps = {
     stations: Station[];
+    business_currency_id: number;
 };
 
-export default function StationsIndex({ stations }: StationsProps) {
+export default function StationsIndex({ stations, business_currency_id }: StationsProps) {
     const { t } = useLocale();
+    const { currencies } = useCurrency();
+    const businessCurrency = currencies.find((currency) => currency.id === business_currency_id);
+    const currencyCode = (id: number) => currencies.find((currency) => currency.id === id)?.code ?? '';
     const [open, setOpen] = useState(
         () =>
             typeof window !== 'undefined' &&
@@ -50,6 +58,7 @@ export default function StationsIndex({ stations }: StationsProps) {
         phone: '',
         email: '',
         address: '',
+        currency_id: '',
     };
 
     const { data, setData, post, put, processing, errors, clearErrors } =
@@ -69,7 +78,9 @@ export default function StationsIndex({ stations }: StationsProps) {
             phone: station.phone ?? '',
             email: station.email ?? '',
             address: station.address ?? '',
+            currency_id: station.currency_id === null ? '' : String(station.currency_id),
         });
+        clearErrors();
         setOpen(true);
     };
 
@@ -108,13 +119,14 @@ export default function StationsIndex({ stations }: StationsProps) {
                             <TableHead>{t('common.name')}</TableHead>
                             <TableHead>{t('stations.phone')}</TableHead>
                             <TableHead>{t('stations.address')}</TableHead>
+                            <TableHead>{t('stations.currency')}</TableHead>
                             <TableHead className="text-right">{t('common.actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {stations.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                <TableCell colSpan={5} className="text-center text-muted-foreground">
                                     {t('stations.no_stations')}
                                 </TableCell>
                             </TableRow>
@@ -135,6 +147,16 @@ export default function StationsIndex({ stations }: StationsProps) {
                                 <TableCell className="text-muted-foreground">{station.phone ?? '—'}</TableCell>
                                 <TableCell className="max-w-xs truncate text-muted-foreground">
                                     {station.address ?? '—'}
+                                </TableCell>
+                                <TableCell>
+                                    <span className="font-medium">
+                                        {currencyCode(station.currency_id ?? business_currency_id)}
+                                    </span>
+                                    {station.currency_id === null && (
+                                        <span className="ml-1 text-xs text-muted-foreground">
+                                            ({t('stations.currency_inherited')})
+                                        </span>
+                                    )}
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button variant="ghost" size="icon" onClick={() => openEdit(station)}>
@@ -189,6 +211,18 @@ export default function StationsIndex({ stations }: StationsProps) {
                                 onChange={(e) => setData('address', e.target.value)}
                             />
                             <InputError message={errors.address} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="currency_id">{t('stations.currency')}</Label>
+                            <CurrencySelect
+                                id="currency_id"
+                                value={data.currency_id}
+                                onValueChange={(value) => setData('currency_id', value)}
+                                inheritLabel={t('stations.inherit_currency', {
+                                    currency: businessCurrency?.code ?? '',
+                                })}
+                            />
+                            <InputError message={errors.currency_id} />
                         </div>
                         <DialogFooter>
                             <Button type="submit" disabled={processing}>

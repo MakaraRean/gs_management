@@ -21,7 +21,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { formatCurrency } from '@/lib/format';
+import { useCurrency } from '@/hooks/use-currency';
 import { destroy, store, update } from '@/routes/fuel/types';
 
 type FuelType = {
@@ -39,6 +39,7 @@ type FuelTypesProps = {
 
 export default function FuelTypes({ fuelTypes }: FuelTypesProps) {
     const { t } = useLocale();
+    const { formatCurrency } = useCurrency();
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<FuelType | null>(null);
 

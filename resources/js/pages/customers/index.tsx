@@ -24,7 +24,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { formatCurrency } from '@/lib/format';
+import { useCurrency } from '@/hooks/use-currency';
 import { index, destroy, show, store } from '@/routes/customers';
 import { store as requestCustomerDeletion } from '@/routes/customers/deletion-request';
 
@@ -45,6 +45,7 @@ type CustomersProps = {
 
 export default function CustomersIndex({ customers, customersPerStation }: CustomersProps) {
     const { t } = useLocale();
+    const { formatCurrency } = useCurrency();
     const { current_station, stations } = usePage().props;
     const [open, setOpen] = useState(false);
 

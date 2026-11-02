@@ -32,7 +32,7 @@ class TeamController extends Controller
             ]);
 
         return Inertia::render('team/index', [
-            'business' => $business->only(['id', 'name', 'phone', 'email', 'address', 'customers_per_station']),
+            'business' => $business->only(['id', 'name', 'phone', 'email', 'address', 'currency_id', 'customers_per_station']),
             'members' => $members,
             'roles' => Role::cases(),
             'canManageTeam' => $canManageTeam,

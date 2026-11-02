@@ -11,6 +11,7 @@ use App\Models\Sale;
 use App\Models\Station;
 use App\Models\Tank;
 use App\Models\User;
+use Database\Factories\CurrencyFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -222,6 +223,7 @@ class CustomerTest extends TestCase
         ]);
 
         $customer->payments()->create([
+            'currency_id' => CurrencyFactory::seeded('USD')->id,
             'amount' => 100.00,
             'payment_method' => 'cash',
             'paid_at' => now(),

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCurrency;
 use App\Traits\HasActiveScope;
 use Database\Factories\FuelDeliveryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,10 +12,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class FuelDelivery extends Model
 {
     /** @use HasFactory<FuelDeliveryFactory> */
-    use HasActiveScope, HasFactory;
+    use BelongsToCurrency, HasActiveScope, HasFactory;
 
     protected $fillable = [
         'tank_id',
+        'currency_id',
         'volume',
         'cost_per_unit',
         'total_cost',

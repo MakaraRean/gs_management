@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCurrency;
 use App\Traits\HasActiveScope;
 use App\Traits\HasDeletionRequests;
 use Database\Factories\SaleFactory;
@@ -12,13 +13,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
-    use HasActiveScope, HasDeletionRequests, HasFactory;
+    use BelongsToCurrency, HasActiveScope, HasDeletionRequests, HasFactory;
 
     protected $fillable = [
         'pump_id',
         'fuel_type_id',
         'user_id',
         'station_id',
+        'currency_id',
         'customer_id',
         'volume',
         'unit_price',

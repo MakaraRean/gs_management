@@ -14,6 +14,16 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class CustomerPaymentFactory extends Factory
 {
     /**
+     * Stamp the payment with its station's currency unless a test sets one.
+     */
+    public function configure(): static
+    {
+        return $this->afterMaking(function (CustomerPayment $payment): void {
+            $payment->currency_id ??= CurrencyFactory::idForStation($payment->station_id);
+        });
+    }
+
+    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>

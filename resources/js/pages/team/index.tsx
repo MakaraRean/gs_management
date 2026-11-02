@@ -2,6 +2,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { Crown, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useLocale } from '@/hooks/use-locale';
+import { CurrencySelect } from '@/components/currency-select';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ type Business = {
     phone: string | null;
     email: string | null;
     address: string | null;
+    currency_id: number;
     customers_per_station: boolean;
 };
 
@@ -81,6 +83,7 @@ export default function TeamIndex({ business, members, roles, canManageTeam }: T
         phone: business.phone ?? '',
         email: business.email ?? '',
         address: business.address ?? '',
+        currency_id: String(business.currency_id),
         customers_per_station: business.customers_per_station,
     });
 
@@ -109,6 +112,7 @@ export default function TeamIndex({ business, members, roles, canManageTeam }: T
                     phone: latest.phone ?? '',
                     email: latest.email ?? '',
                     address: latest.address ?? '',
+                    currency_id: String(latest.currency_id),
                     customers_per_station: latest.customers_per_station,
                 });
                 businessForm.clearErrors();
@@ -348,6 +352,16 @@ export default function TeamIndex({ business, members, roles, canManageTeam }: T
                                 onChange={(e) => businessForm.setData('address', e.target.value)}
                             />
                             <InputError message={businessForm.errors.address} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="business_currency">{t('currencies.base_currency')}</Label>
+                            <CurrencySelect
+                                id="business_currency"
+                                value={businessForm.data.currency_id}
+                                onValueChange={(value) => businessForm.setData('currency_id', value)}
+                            />
+                            <p className="text-xs text-muted-foreground">{t('currencies.base_currency_hint')}</p>
+                            <InputError message={businessForm.errors.currency_id} />
                         </div>
                         <div className="flex items-center gap-2">
                             <Checkbox

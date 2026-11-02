@@ -21,7 +21,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatCurrency, formatNumber, formatVolume } from '@/lib/format';
+import { useCurrency } from '@/hooks/use-currency';
+import { formatNumber, formatVolume } from '@/lib/format';
 import { index } from '@/routes/analytics';
 
 type AnalyticsProps = {
@@ -59,6 +60,7 @@ export default function Analytics({
     totals,
 }: AnalyticsProps) {
     const { t } = useLocale();
+    const { formatCurrency } = useCurrency();
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
 

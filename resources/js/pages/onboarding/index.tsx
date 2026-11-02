@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Building2 } from 'lucide-react';
 import { useLocale } from '@/hooks/use-locale';
+import { CurrencySelect } from '@/components/currency-select';
 import InputError from '@/components/input-error';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ export default function OnboardingIndex({ defaults }: Props) {
         phone: '',
         email: defaults.email,
         address: '',
+        currency_id: '',
         customers_per_station: false,
     });
 
@@ -98,6 +100,16 @@ export default function OnboardingIndex({ defaults }: Props) {
                                 onChange={(e) => setData('address', e.target.value)}
                             />
                             <InputError message={errors.address} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="currency_id">{t('currencies.base_currency')}</Label>
+                            <CurrencySelect
+                                id="currency_id"
+                                value={data.currency_id}
+                                onValueChange={(value) => setData('currency_id', value)}
+                            />
+                            <p className="text-xs text-muted-foreground">{t('currencies.base_currency_hint')}</p>
+                            <InputError message={errors.currency_id} />
                         </div>
                         <div className="flex items-center gap-2">
                             <Checkbox

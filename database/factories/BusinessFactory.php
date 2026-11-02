@@ -25,6 +25,7 @@ class BusinessFactory extends Factory
             'phone' => fake()->phoneNumber(),
             'email' => fake()->safeEmail(),
             'address' => fake()->address(),
+            'currency_id' => fn (): int => CurrencyFactory::seeded('USD')->id,
             'customers_per_station' => false,
         ];
     }

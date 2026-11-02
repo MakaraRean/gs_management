@@ -31,7 +31,8 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatCurrency, formatDateTime } from '@/lib/format';
+import { useCurrency } from '@/hooks/use-currency';
+import { formatDateTime } from '@/lib/format';
 import { index } from '@/routes/customers';
 import { store as storeAddress, update as updateAddress, destroy as destroyAddress } from '@/routes/customers/address';
 import { store as storePayment, destroy as destroyPayment } from '@/routes/customers/payments';
@@ -52,6 +53,7 @@ type CreditSale = {
     id: number;
     sold_at: string;
     total_amount: string;
+    currency_id: number;
     volume: string;
     pump: { name: string } | null;
     fuel_type: { name: string; unit: string } | null;
@@ -61,6 +63,7 @@ type Payment = {
     id: number;
     paid_at: string;
     amount: string;
+    currency_id: number;
     payment_method: string;
     notes: string | null;
     deletion_pending: boolean;
@@ -91,6 +94,7 @@ type CustomerShowProps = {
 
 export default function CustomerShow({ customer, availableAddresses, creditSales, payments }: CustomerShowProps) {
     const { t } = useLocale();
+    const { formatCurrency } = useCurrency();
     const [addressOpen, setAddressOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
     const [addressMode, setAddressMode] = useState<'create' | 'assign'>('create');
@@ -292,7 +296,7 @@ export default function CustomerShow({ customer, availableAddresses, creditSales
                                             {sale.volume} {sale.fuel_type?.unit ?? ''}
                                         </TableCell>
                                         <TableCell className="text-right tabular-nums font-medium">
-                                            {formatCurrency(sale.total_amount)}
+                                            {formatCurrency(sale.total_amount, sale.currency_id)}
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -337,7 +341,7 @@ export default function CustomerShow({ customer, availableAddresses, creditSales
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">{payment.notes ?? '—'}</TableCell>
                                         <TableCell className="text-right tabular-nums font-medium text-green-600">
-                                            {formatCurrency(payment.amount)}
+                                            {formatCurrency(payment.amount, payment.currency_id)}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <DeleteRecordAction
