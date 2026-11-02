@@ -151,5 +151,7 @@ return [
     'ulid' => ':attribute ត្រូវតែជា ULID ត្រឹមត្រូវ។',
     'uuid' => ':attribute ត្រូវតែជា UUID ត្រឹមត្រូវ។',
 
-    'attributes' => [],
+    'attributes' => [
+        'currency_id' => 'រូបិយប័ណ្ណ',
+    ],
 ];

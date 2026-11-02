@@ -195,6 +195,8 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'currency_id' => 'currency',
+    ],
 
 ];
