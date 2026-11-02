@@ -35,6 +35,7 @@ type Customer = {
     email: string | null;
     credit_limit: string;
     outstanding_balance: number;
+    other_balances: { currency_id: number; amount: number }[];
     deletion_pending: boolean;
 };
 
@@ -136,10 +137,19 @@ export default function CustomersIndex({ customers, customersPerStation }: Custo
                                 </TableCell>
                                 <TableCell className="text-muted-foreground">{customer.phone ?? '—'}</TableCell>
                                 <TableCell className="text-right tabular-nums">
-                                    {customer.outstanding_balance > 0 ? (
-                                        <Badge variant="destructive">
-                                            {formatCurrency(customer.outstanding_balance)}
-                                        </Badge>
+                                    {customer.outstanding_balance > 0 || customer.other_balances.length > 0 ? (
+                                        <div className="flex flex-col items-end gap-1">
+                                            {customer.outstanding_balance > 0 && (
+                                                <Badge variant="destructive">
+                                                    {formatCurrency(customer.outstanding_balance)}
+                                                </Badge>
+                                            )}
+                                            {customer.other_balances.map((balance) => (
+                                                <Badge key={balance.currency_id} variant="destructive">
+                                                    {formatCurrency(balance.amount, balance.currency_id)}
+                                                </Badge>
+                                            ))}
+                                        </div>
                                     ) : (
                                         <span className="text-muted-foreground">—</span>
                                     )}

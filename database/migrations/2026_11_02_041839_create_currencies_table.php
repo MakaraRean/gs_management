@@ -9,6 +9,8 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * The currency list is reference data and seeders are not run in production, so it ships with the migration.
      */
     public function up(): void
     {
@@ -18,13 +20,11 @@ return new class extends Migration
             $table->string('name');
             $table->string('name_km');
             $table->string('symbol', 8);
-            // Decimal digits the currency is rounded and displayed to (capped by the 2dp amount columns).
-            $table->unsignedTinyInteger('round_digits')->default(2);
+            $table->unsignedTinyInteger('round_digits')->default(2)->comment('Decimal digits amounts are rounded and shown to; at most 2, the amount columns hold 2.');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
 
-        // Reference data: seeders are not run in production, so the list ships with the migration.
         $now = now();
 
         DB::table('currencies')->insert(array_map(

@@ -11,12 +11,14 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class CashFlowFactory extends Factory
 {
     /**
-     * Stamp the entry with its station's currency unless a test sets one.
+     * Records with a station are stamped with its currency when saved; stationless ones get USD.
      */
     public function configure(): static
     {
         return $this->afterMaking(function (CashFlow $cashFlow): void {
-            $cashFlow->currency_id ??= CurrencyFactory::idForStation($cashFlow->station_id);
+            if ($cashFlow->station_id === null) {
+                $cashFlow->currency_id ??= CurrencyFactory::seeded('USD')->id;
+            }
         });
     }
 

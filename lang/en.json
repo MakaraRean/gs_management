@@ -364,6 +364,8 @@
     "currencies.base_currency": "Base currency",
     "currencies.select_currency": "Select currency",
     "currencies.base_currency_hint": "Amounts are recorded in this currency. Stations use it unless they have their own.",
+    "currencies.change_confirm": "Changing the currency leaves existing records in the old currency, so they no longer appear in this station's totals, reports and customer balances. Continue?",
+    "currencies.currency": "Currency",
     "stations.currency": "Currency",
     "stations.inherit_currency": "Same as business (:currency)",
     "stations.currency_inherited": "inherited",

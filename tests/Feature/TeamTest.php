@@ -199,6 +199,19 @@ class TeamTest extends TestCase
         $this->assertNotSame('Renamed', $business->fresh()->name);
     }
 
+    public function test_an_unrelated_edit_still_saves_after_the_business_currency_was_retired(): void
+    {
+        $owner = User::factory()->create();
+        $business = Business::factory()->for($owner)->create(['name' => 'Old Name']);
+        $business->currency->update(['is_active' => false]);
+
+        $this->actingAs($owner)
+            ->put(route('business.update'), ['name' => 'New Name', 'currency_id' => $business->currency_id])
+            ->assertRedirect(route('team.index'));
+
+        $this->assertSame('New Name', $business->fresh()->name);
+    }
+
     public function test_team_index_shares_the_business_currency_for_the_edit_form(): void
     {
         $owner = User::factory()->create();

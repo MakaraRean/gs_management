@@ -12,16 +12,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class FuelDeliveryFactory extends Factory
 {
     /**
-     * Stamp the delivery with its tank's station currency unless a test sets one.
-     */
-    public function configure(): static
-    {
-        return $this->afterMaking(function (FuelDelivery $delivery): void {
-            $delivery->currency_id ??= CurrencyFactory::idForTank($delivery->tank_id);
-        });
-    }
-
-    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>

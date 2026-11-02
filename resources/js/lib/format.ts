@@ -21,6 +21,11 @@ const numberFormatter = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 2,
 });
 
+const compactFormatter = new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+});
+
 /**
  * An amount with the currency's own symbol, rounded to the digits that currency uses
  * (USD 2, KHR 0, ...). Without a currency it is a plain number.
@@ -40,6 +45,21 @@ export function formatMoney(
     return formatted.startsWith('-')
         ? `-${currency.symbol}${formatted.slice(1)}`
         : `${currency.symbol}${formatted}`;
+}
+
+/**
+ * A short amount for tight spaces such as chart axes (1.2M, 450K), with the currency's symbol.
+ */
+export function formatMoneyCompact(
+    value: number | string | null | undefined,
+    currency: Pick<Currency, 'symbol'> | null | undefined,
+): string {
+    const amount = Number(value ?? 0);
+    const symbol = currency?.symbol ?? '';
+
+    return amount < 0
+        ? `-${symbol}${compactFormatter.format(Math.abs(amount))}`
+        : `${symbol}${compactFormatter.format(amount)}`;
 }
 
 export function formatNumber(

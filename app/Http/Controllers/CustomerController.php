@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CustomerRequest;
 use App\Http\Requests\RequestDeletionRequest;
 use App\Models\Address;
+use App\Models\Currency;
 use App\Models\Customer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -28,7 +29,7 @@ class CustomerController extends Controller
                 'phone' => $c->phone,
                 'email' => $c->email,
                 'credit_limit' => $c->credit_limit,
-                'outstanding_balance' => $c->outstandingBalance($currency),
+                ...$this->balances($c, $currency),
                 'deletion_pending' => $c->deletion_pending,
             ]);
 
@@ -63,9 +64,7 @@ class CustomerController extends Controller
             ->paginate(20, pageName: 'payments_page');
 
         return Inertia::render('customers/show', [
-            'customer' => array_merge($customer->toArray(), [
-                'outstanding_balance' => $customer->outstandingBalance($this->currentCurrency()),
-            ]),
+            'customer' => array_merge($customer->toArray(), $this->balances($customer, $this->currentCurrency())),
             'availableAddresses' => $availableAddresses,
             'creditSales' => $creditSales,
             'payments' => $payments,
@@ -137,6 +136,25 @@ class CustomerController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('deletion_requests.sent')]);
 
         return back();
+    }
+
+    /**
+     * The balance in the active station's currency, and what the customer owes in other currencies.
+     *
+     * @return array{outstanding_balance: float, other_balances: list<array{currency_id: int, amount: float}>}
+     */
+    private function balances(Customer $customer, Currency $currency): array
+    {
+        $balances = $customer->outstandingBalances();
+
+        return [
+            'outstanding_balance' => $balances[$currency->id] ?? 0.0,
+            'other_balances' => collect($balances)
+                ->except($currency->id)
+                ->map(fn (float $amount, int $currencyId): array => ['currency_id' => $currencyId, 'amount' => $amount])
+                ->values()
+                ->all(),
+        ];
     }
 
     private function customerQuery(): Builder

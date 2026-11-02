@@ -128,6 +128,11 @@ export default function TeamIndex({ business, members, roles, canManageTeam }: T
 
     const submitBusiness = (event: React.FormEvent) => {
         event.preventDefault();
+
+        if (Number(businessForm.data.currency_id) !== business.currency_id && !confirm(t('currencies.change_confirm'))) {
+            return;
+        }
+
         businessForm.put(businessUpdate().url, { onSuccess: () => setBusinessOpen(false) });
     };
 

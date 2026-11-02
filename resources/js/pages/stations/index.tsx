@@ -88,6 +88,16 @@ export default function StationsIndex({ stations, business_currency_id }: Statio
         event.preventDefault();
         const options = { onSuccess: () => setOpen(false) };
         if (editing) {
+            const effectiveCurrencyId = (id: number | null) => id ?? business_currency_id;
+            const chosenCurrencyId = data.currency_id === '' ? null : Number(data.currency_id);
+
+            if (
+                effectiveCurrencyId(chosenCurrencyId) !== effectiveCurrencyId(editing.currency_id) &&
+                !confirm(t('currencies.change_confirm'))
+            ) {
+                return;
+            }
+
             put(update({ station: editing.id }).url, options);
         } else {
             post(store().url, options);

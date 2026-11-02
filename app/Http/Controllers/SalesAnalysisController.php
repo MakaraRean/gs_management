@@ -19,10 +19,8 @@ class SalesAnalysisController extends Controller
         $station = $this->currentStation();
         $currency = $this->currentCurrency();
 
-        // The active station's sales in its current currency, so no total mixes currencies.
         $base = fn () => Sale::query()
-            ->where('sales.station_id', $station->id)
-            ->inCurrency($currency)
+            ->inStationCurrency($station, $currency)
             ->whereBetween('sold_at', $range);
 
         $revenueByDay = $base()

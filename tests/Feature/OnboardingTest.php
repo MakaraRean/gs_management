@@ -114,6 +114,15 @@ class OnboardingTest extends TestCase
         $this->assertDatabaseMissing('businesses', ['name' => 'Acme Fuel']);
     }
 
+    public function test_the_missing_base_currency_error_names_the_field_in_plain_words(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->withUnencryptedCookie('locale', 'en')
+            ->from(route('onboarding.show'))
+            ->post(route('onboarding.business.store'), ['name' => 'Acme Fuel'])
+            ->assertSessionHasErrors(['currency_id' => 'The currency field is required.']);
+    }
+
     public function test_the_base_currency_must_be_an_active_currency(): void
     {
         $user = User::factory()->create();

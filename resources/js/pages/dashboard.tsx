@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { DollarSign, Droplets, Fuel, Receipt, Wallet } from 'lucide-react';
+import { Banknote, Droplets, Fuel, Receipt, Wallet } from 'lucide-react';
 import { useLocale } from '@/hooks/use-locale';
 import {
     Area,
@@ -81,7 +81,7 @@ export default function Dashboard({
     revenueByDay,
 }: DashboardProps) {
     const { t } = useLocale();
-    const { currency, formatCurrency } = useCurrency();
+    const { formatCompactCurrency, formatCurrency } = useCurrency();
     const { can } = usePermissions();
     const { has_station: hasStation } = usePage().props as {
         has_station?: boolean;
@@ -125,7 +125,7 @@ export default function Dashboard({
                     <StatCard
                         title={t('dashboard.today_revenue')}
                         value={formatCurrency(stats.today_revenue)}
-                        icon={DollarSign}
+                        icon={Banknote}
                     />
                     <StatCard
                         title={t('dashboard.today_volume')}
@@ -198,9 +198,9 @@ export default function Dashboard({
                                         />
                                         <YAxis
                                             fontSize={12}
-                                            width={48}
+                                            width={64}
                                             tickFormatter={(value) =>
-                                                `${currency?.symbol ?? ''}${value}`
+                                                formatCompactCurrency(value)
                                             }
                                         />
                                         <Tooltip

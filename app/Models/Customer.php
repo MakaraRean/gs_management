@@ -75,6 +75,30 @@ class Customer extends Model
     }
 
     /**
+     * What the customer still owes in each currency, for the currencies they owe anything in.
+     *
+     * @return array<int, float> amount keyed by currency id
+     */
+    public function outstandingBalances(): array
+    {
+        $credited = $this->sales()
+            ->where('payment_method', 'credit')
+            ->selectRaw('currency_id, SUM(total_amount) as total')
+            ->groupBy('currency_id')
+            ->pluck('total', 'currency_id');
+
+        $paid = $this->payments()
+            ->selectRaw('currency_id, SUM(amount) as total')
+            ->groupBy('currency_id')
+            ->pluck('total', 'currency_id');
+
+        return $credited
+            ->map(fn ($total, $currencyId): float => (float) $total - (float) ($paid[$currencyId] ?? 0))
+            ->filter(fn (float $balance): bool => $balance > 0)
+            ->all();
+    }
+
+    /**
      * What the customer still owes; with a currency, only credit and payments recorded in it count.
      */
     public function outstandingBalance(?Currency $currency = null): float

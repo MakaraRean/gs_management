@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Business;
 use App\Models\CashFlow;
+use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\FuelDelivery;
 use App\Models\FuelType;
@@ -12,6 +13,7 @@ use App\Models\Station;
 use App\Models\Tank;
 use App\Models\User;
 use Database\Factories\CurrencyFactory;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -130,17 +132,112 @@ class CurrencyRecordsTest extends TestCase
         $this->actingAtStation($this->khrStation)
             ->post(route('fuel.deliveries.store'), [
                 'tank_id' => $tank->id,
-                'volume' => 1000,
-                'cost_per_unit' => 1.2345,
+                'volume' => 3,
+                'cost_per_unit' => 1234.6,
                 'delivered_at' => now()->toDateTimeString(),
             ])
             ->assertRedirect(route('fuel.deliveries.index'));
 
+        // The unit cost is whole riel, and the total follows it.
         $this->assertDatabaseHas('fuel_deliveries', [
             'tank_id' => $tank->id,
             'currency_id' => CurrencyFactory::seeded('KHR')->id,
-            'total_cost' => '1235.00',
+            'cost_per_unit' => '1235.00',
+            'total_cost' => '3705.00',
         ]);
+    }
+
+    public function test_manual_amounts_and_fuel_prices_are_rounded_to_the_stations_currency(): void
+    {
+        $this->actingAtStation($this->khrStation)
+            ->post(route('cash-flow.store'), [
+                'direction' => 'in',
+                'category' => 'deposit',
+                'amount' => 1000.4,
+                'description' => 'Float',
+                'occurred_at' => now()->toDateTimeString(),
+            ]);
+        $this->actingAtStation($this->khrStation)
+            ->post(route('fuel.types.store'), ['name' => 'Diesel', 'unit_price' => 4500.6, 'unit' => 'L', 'color' => '#f59e0b']);
+        $this->actingAtStation($this->usdStation)
+            ->post(route('fuel.types.store'), ['name' => 'Diesel', 'unit_price' => 1.456, 'unit' => 'L', 'color' => '#f59e0b']);
+
+        $this->assertDatabaseHas('cash_flows', ['description' => 'Float', 'amount' => '1000.00']);
+        $this->assertDatabaseHas('fuel_types', ['station_id' => $this->khrStation->id, 'unit_price' => '4501.00']);
+        $this->assertDatabaseHas('fuel_types', ['station_id' => $this->usdStation->id, 'unit_price' => '1.46']);
+    }
+
+    public function test_a_payment_can_be_recorded_in_the_currency_the_customer_owes(): void
+    {
+        $customer = Customer::factory()->create(['business_id' => $this->business->id]);
+        $khr = CurrencyFactory::seeded('KHR');
+
+        $this->actingAtStation($this->usdStation)
+            ->post(route('customers.payments.store', $customer), [
+                'amount' => 4000.6,
+                'currency_id' => $khr->id,
+                'payment_method' => 'cash',
+                'paid_at' => now()->toDateTimeString(),
+            ])
+            ->assertRedirect(route('customers.show', $customer));
+
+        $this->assertDatabaseHas('customer_payments', ['customer_id' => $customer->id, 'currency_id' => $khr->id, 'amount' => '4001.00']);
+        $this->assertDatabaseHas('cash_flows', ['category' => 'credit_payment', 'currency_id' => $khr->id, 'amount' => '4001.00']);
+    }
+
+    public function test_a_payment_currency_must_be_an_active_currency(): void
+    {
+        $customer = Customer::factory()->create(['business_id' => $this->business->id]);
+        $retired = Currency::factory()->inactive()->create();
+
+        foreach ([999999, $retired->id] as $currencyId) {
+            $this->actingAtStation($this->usdStation)
+                ->from(route('customers.show', $customer))
+                ->post(route('customers.payments.store', $customer), [
+                    'amount' => 10,
+                    'currency_id' => $currencyId,
+                    'payment_method' => 'cash',
+                ])
+                ->assertSessionHasErrors('currency_id');
+        }
+
+        $this->assertDatabaseCount('customer_payments', 0);
+    }
+
+    public function test_a_new_record_without_a_currency_is_stamped_from_its_station(): void
+    {
+        $khr = CurrencyFactory::seeded('KHR');
+        $usd = CurrencyFactory::seeded('USD');
+
+        $cashFlow = CashFlow::create(['station_id' => $this->khrStation->id, 'direction' => 'in', 'category' => 'deposit', 'amount' => 5, 'description' => 'x', 'occurred_at' => now()]);
+        $delivery = FuelDelivery::create(['tank_id' => $this->tankAt($this->khrStation)->id, 'volume' => 1, 'cost_per_unit' => 1, 'total_cost' => 1, 'delivered_at' => now()]);
+        $explicit = CashFlow::create(['station_id' => $this->khrStation->id, 'currency_id' => $usd->id, 'direction' => 'in', 'category' => 'deposit', 'amount' => 5, 'description' => 'y', 'occurred_at' => now()]);
+
+        $this->assertSame($khr->id, $cashFlow->currency_id);
+        $this->assertSame($khr->id, $delivery->currency_id);
+        $this->assertSame($usd->id, $explicit->currency_id);
+    }
+
+    public function test_a_record_with_no_station_to_take_a_currency_from_cannot_be_created(): void
+    {
+        $this->expectException(QueryException::class);
+
+        CashFlow::create(['direction' => 'in', 'category' => 'deposit', 'amount' => 5, 'description' => 'x', 'occurred_at' => now()]);
+    }
+
+    public function test_the_station_scopes_follow_the_station_and_include_deliveries_of_deactivated_tanks(): void
+    {
+        $khr = CurrencyFactory::seeded('KHR');
+        $tank = $this->tankAt($this->usdStation);
+        $delivery = FuelDelivery::factory()->create(['tank_id' => $tank->id]);
+        FuelDelivery::factory()->create(['tank_id' => $this->tankAt($this->khrStation)->id]);
+        $tank->deactivate();
+        $mine = CashFlow::factory()->create(['station_id' => $this->usdStation->id]);
+        CashFlow::factory()->create(['station_id' => $this->usdStation->id, 'currency_id' => $khr->id]);
+        CashFlow::factory()->create(['station_id' => $this->khrStation->id]);
+
+        $this->assertSame([$delivery->id], FuelDelivery::query()->forStation($this->usdStation)->pluck('id')->all());
+        $this->assertSame([$mine->id], CashFlow::query()->inStationCurrency($this->usdStation, $this->usdStation->effective_currency)->pluck('id')->all());
     }
 
     public function test_a_delivery_into_another_stations_tank_is_forbidden(): void

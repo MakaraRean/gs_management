@@ -14,6 +14,9 @@ return new class extends Migration
 
     /**
      * Run the migrations.
+     *
+     * Each record is backfilled with the effective currency of its station (records without one were
+     * always shown in USD), and the report indexes let reports filter on station, currency and date without joins.
      */
     public function up(): void
     {
@@ -23,7 +26,6 @@ return new class extends Migration
             });
         }
 
-        // Backfill: each record gets the effective currency of the station it belongs to.
         $effectiveCurrency = 'select coalesce(s.currency_id, b.currency_id) from stations s join businesses b on b.id = s.business_id';
 
         foreach (['sales', 'cash_flows', 'customer_payments'] as $tableName) {
@@ -36,7 +38,6 @@ return new class extends Migration
             'currency_id' => DB::raw('(select coalesce(s.currency_id, b.currency_id) from tanks t join stations s on s.id = t.station_id join businesses b on b.id = s.business_id where t.id = fuel_deliveries.tank_id)'),
         ]);
 
-        // Records without a station (or with a deleted one) were always shown in USD.
         $usd = DB::table('currencies')->where('code', 'USD')->value('id');
 
         foreach (self::TABLES as $tableName) {
@@ -47,7 +48,6 @@ return new class extends Migration
             });
         }
 
-        // Reports filter on the record's own station, currency and date, with no joins.
         Schema::table('sales', function (Blueprint $table) {
             $table->index(['station_id', 'currency_id', 'sold_at'], 'sales_station_currency_sold_at_index');
         });

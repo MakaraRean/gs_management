@@ -9,6 +9,9 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * Existing businesses start in USD, the currency amounts have always been shown in. A station's own
+     * currency is optional: NULL means it uses its business's currency.
      */
     public function up(): void
     {
@@ -16,7 +19,6 @@ return new class extends Migration
             $table->foreignId('currency_id')->nullable()->after('address')->constrained()->restrictOnDelete();
         });
 
-        // Backfill: amounts have always been shown in USD, so existing businesses start there.
         DB::table('businesses')->update([
             'currency_id' => DB::table('currencies')->where('code', 'USD')->value('id'),
         ]);
@@ -25,7 +27,6 @@ return new class extends Migration
             $table->unsignedBigInteger('currency_id')->nullable(false)->change();
         });
 
-        // A station's own currency is optional: NULL means it uses its business's currency.
         Schema::table('stations', function (Blueprint $table) {
             $table->foreignId('currency_id')->nullable()->after('address')->constrained()->restrictOnDelete();
         });

@@ -44,8 +44,7 @@ class ReportController extends Controller
     private function dailySalesReport(CarbonInterface $from, CarbonInterface $to, Station $station, Currency $currency): array
     {
         $rows = Sale::query()
-            ->where('station_id', $station->id)
-            ->inCurrency($currency)
+            ->inStationCurrency($station, $currency)
             ->whereBetween('sold_at', LocalTime::dayRange($from, $to))
             ->selectRaw(LocalTime::dateSql('sold_at').' as date, COUNT(*) as transactions, SUM(volume) as volume, SUM(total_amount) as revenue')
             ->groupBy('date')
@@ -117,14 +116,12 @@ class ReportController extends Controller
         $range = LocalTime::dayRange($from, $to);
 
         $sales = fn (string $paymentMethod) => (float) Sale::query()
-            ->where('station_id', $station->id)
-            ->inCurrency($currency)
+            ->inStationCurrency($station, $currency)
             ->where('payment_method', $paymentMethod)
             ->whereBetween('sold_at', $range)
             ->sum('total_amount');
         $manualCashFlows = fn (string $direction) => (float) CashFlow::query()
-            ->where('station_id', $station->id)
-            ->inCurrency($currency)
+            ->inStationCurrency($station, $currency)
             ->where('direction', $direction)
             ->whereBetween('occurred_at', $range)
             ->sum('amount');
@@ -132,8 +129,7 @@ class ReportController extends Controller
         $cashSales = $sales('cash');
         $cardSales = $sales('card');
         $deliveries = (float) FuelDelivery::query()
-            ->whereHas('tank', fn ($query) => $query->where('station_id', $station->id))
-            ->inCurrency($currency)
+            ->inStationCurrency($station, $currency)
             ->whereBetween('delivered_at', $range)
             ->sum('total_cost');
         $manualIn = $manualCashFlows('in');

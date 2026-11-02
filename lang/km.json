@@ -364,6 +364,8 @@
     "currencies.base_currency": "រូបិយប័ណ្ណមូលដ្ឋាន",
     "currencies.select_currency": "ជ្រើសរើសរូបិយប័ណ្ណ",
     "currencies.base_currency_hint": "ចំនួនទឹកប្រាក់ត្រូវបានកត់ត្រាជារូបិយប័ណ្ណនេះ។ ស្ថានីយ៍ប្រើវា លុះត្រាតែមានរូបិយប័ណ្ណផ្ទាល់ខ្លួន។",
+    "currencies.change_confirm": "ការផ្លាស់ប្តូររូបិយប័ណ្ណ ធ្វើឱ្យកំណត់ត្រាចាស់នៅជារូបិយប័ណ្ណដើម ហើយលែងបង្ហាញក្នុងសរុប របាយការណ៍ និងសមតុល្យអតិថិជនរបស់ស្ថានីយ៍នេះ។ បន្តឬ?",
+    "currencies.currency": "រូបិយប័ណ្ណ",
     "stations.currency": "រូបិយប័ណ្ណ",
     "stations.inherit_currency": "ដូចអាជីវកម្ម (:currency)",
     "stations.currency_inherited": "ទទួលពីអាជីវកម្ម",
