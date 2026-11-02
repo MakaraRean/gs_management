@@ -1,10 +1,10 @@
 import { usePage } from '@inertiajs/react';
-import { formatMoney } from '@/lib/format';
-import type { Currency } from '@/types';
+import { formatMoney, formatMoneyCompact } from '@/lib/format';
+import type { Currency, CurrentStation } from '@/types';
 
 export function useCurrency() {
     const { current_station, currencies } = usePage().props as unknown as {
-        current_station: { currency: Currency } | null;
+        current_station: CurrentStation | null;
         currencies: Currency[];
     };
     const currency = current_station?.currency ?? null;
@@ -25,5 +25,8 @@ export function useCurrency() {
         return formatMoney(value, recordCurrency ?? currency);
     };
 
-    return { currency, currencies, formatCurrency };
+    const formatCompactCurrency = (value: number | string | null | undefined): string =>
+        formatMoneyCompact(value, currency);
+
+    return { currency, currencies, formatCurrency, formatCompactCurrency };
 }

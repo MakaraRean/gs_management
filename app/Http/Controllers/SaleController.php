@@ -96,7 +96,6 @@ class SaleController extends Controller
                 'fuel_type_id' => $pump->tank->fuel_type_id,
                 'user_id' => $request->user()?->id,
                 'station_id' => $pump->tank->station_id,
-                'currency_id' => $currency->id,
                 'customer_id' => $request->input('customer_id'),
                 'volume' => $volume,
                 'unit_price' => $unitPrice,

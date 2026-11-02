@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import type { Currency } from '@/types';
+import type { CurrentStation } from '@/types';
 
 export function useStation() {
     const { current_station, stations } = usePage().props;
@@ -9,7 +9,7 @@ export function useStation() {
     };
 
     return {
-        currentStation: current_station as { id: number; name: string; business_id: number; currency: Currency } | null,
+        currentStation: current_station as CurrentStation | null,
         stations: stations as Array<{ id: number; name: string; business_id: number }>,
         setStation,
     };

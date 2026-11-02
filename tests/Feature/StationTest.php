@@ -109,6 +109,20 @@ class StationTest extends TestCase
         $this->assertDatabaseMissing('stations', ['name' => 'Bad Branch']);
     }
 
+    public function test_an_unrelated_edit_still_saves_after_the_stations_currency_was_retired(): void
+    {
+        $user = User::factory()->create();
+        $khr = CurrencyFactory::seeded('KHR');
+        $station = Station::factory()->for(Business::factory()->for($user))->create(['name' => 'Old', 'currency_id' => $khr->id]);
+        $khr->update(['is_active' => false]);
+
+        $this->actingAs($user)
+            ->put(route('stations.update', $station), ['name' => 'New', 'currency_id' => $khr->id])
+            ->assertRedirect(route('stations.index'));
+
+        $this->assertSame('New', $station->fresh()->name);
+    }
+
     public function test_the_stations_index_exposes_the_business_currency_to_label_inheriting_stations(): void
     {
         $user = User::factory()->create();

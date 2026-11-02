@@ -25,6 +25,8 @@ type Props = {
     onValueChange: (value: string) => void;
     /** Adds a first option that clears the value, e.g. "Same as business (USD)". */
     inheritLabel?: string;
+    /** Limits the choices to these currency ids. */
+    onlyIds?: number[];
 };
 
 export function CurrencySelect({
@@ -32,12 +34,15 @@ export function CurrencySelect({
     value,
     onValueChange,
     inheritLabel,
+    onlyIds,
 }: Props) {
     const { t, locale } = useLocale();
     const { currencies } = useCurrency();
 
     const options = currencies.filter(
-        (currency) => currency.is_active || String(currency.id) === value,
+        (currency) =>
+            (currency.is_active || String(currency.id) === value) &&
+            (!onlyIds || onlyIds.includes(currency.id)),
     );
 
     return (

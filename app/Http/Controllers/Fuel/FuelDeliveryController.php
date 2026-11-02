@@ -20,8 +20,8 @@ class FuelDeliveryController extends Controller
 
         return Inertia::render('fuel/deliveries', [
             'deliveries' => FuelDelivery::query()
-                ->whereHas('tank', fn ($query) => $query->where('station_id', $station->id))
-                ->with('tank.fuelType')
+                ->forStation($station)
+                ->with(['tank' => fn ($query) => $query->withInactive()->with('fuelType')])
                 ->latest('delivered_at')
                 ->limit(100)
                 ->get(),
@@ -44,8 +44,8 @@ class FuelDeliveryController extends Controller
 
         $currency = $this->currentCurrency();
 
-        $data['currency_id'] = $currency->id;
-        $data['total_cost'] = $currency->round((float) $data['volume'] * (float) $data['cost_per_unit']);
+        $data['cost_per_unit'] = $currency->round($data['cost_per_unit']);
+        $data['total_cost'] = $currency->round((float) $data['volume'] * $data['cost_per_unit']);
         $data['delivered_at'] = LocalTime::toUtc($data['delivered_at']);
 
         DB::transaction(function () use ($data): void {

@@ -27,7 +27,7 @@ class FuelTypeController extends Controller
     public function store(FuelTypeRequest $request): RedirectResponse
     {
         FuelType::create([
-            ...$request->validated(),
+            ...$this->pricedLike($request->validated()),
             'station_id' => $this->currentStation()->id,
         ]);
 
@@ -40,7 +40,7 @@ class FuelTypeController extends Controller
     {
         abort_unless($fuelType->station_id === $this->currentStation()->id, 403);
 
-        $fuelType->update($request->validated());
+        $fuelType->update($this->pricedLike($request->validated()));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Fuel type updated.')]);
 
@@ -56,5 +56,16 @@ class FuelTypeController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Fuel type deleted.')]);
 
         return to_route('fuel.types.index');
+    }
+
+    /**
+     * The validated fields with the unit price rounded to the active station's currency.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function pricedLike(array $data): array
+    {
+        return [...$data, 'unit_price' => $this->currentCurrency()->round($data['unit_price'])];
     }
 }

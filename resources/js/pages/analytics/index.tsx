@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { DollarSign, Droplets, Receipt, TrendingUp } from 'lucide-react';
+import { Banknote, Droplets, Receipt, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import {
     Bar,
@@ -112,7 +112,7 @@ export default function Analytics({
                     <StatCard
                         title={t('analytics.revenue')}
                         value={formatCurrency(totals.revenue)}
-                        icon={DollarSign}
+                        icon={Banknote}
                     />
                     <StatCard
                         title={t('analytics.volume')}

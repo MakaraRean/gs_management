@@ -2,6 +2,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocale } from '@/hooks/use-locale';
+import { CurrencySelect } from '@/components/currency-select';
 import { DeleteRecordAction } from '@/components/delete-record-action';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -82,6 +83,7 @@ type Customer = {
     notes: string | null;
     credit_limit: string;
     outstanding_balance: number;
+    other_balances: { currency_id: number; amount: number }[];
     address: Address | null;
 };
 
@@ -94,7 +96,7 @@ type CustomerShowProps = {
 
 export default function CustomerShow({ customer, availableAddresses, creditSales, payments }: CustomerShowProps) {
     const { t } = useLocale();
-    const { formatCurrency } = useCurrency();
+    const { currency, formatCurrency } = useCurrency();
     const [addressOpen, setAddressOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
     const [addressMode, setAddressMode] = useState<'create' | 'assign'>('create');
@@ -110,6 +112,7 @@ export default function CustomerShow({ customer, availableAddresses, creditSales
 
     const blankPayment = {
         amount: '',
+        currency_id: '',
         payment_method: 'cash',
         notes: '',
         paid_at: '',
@@ -128,7 +131,7 @@ export default function CustomerShow({ customer, availableAddresses, creditSales
     };
 
     const openCreatePayment = () => {
-        paymentForm.setData(blankPayment);
+        paymentForm.setData({ ...blankPayment, currency_id: currency ? String(currency.id) : '' });
         paymentForm.clearErrors();
         setPaymentOpen(true);
     };
@@ -203,11 +206,21 @@ export default function CustomerShow({ customer, availableAddresses, creditSales
                             <p className="text-sm text-muted-foreground">{customer.phone}</p>
                         )}
                     </div>
-                    {customer.outstanding_balance > 0 && (
-                        <Badge variant="destructive" className="self-start text-sm">
-                            {t('customers.outstanding_balance')}:{' '}
-                            {formatCurrency(customer.outstanding_balance)}
-                        </Badge>
+                    {(customer.outstanding_balance > 0 || customer.other_balances.length > 0) && (
+                        <div className="flex flex-wrap items-start gap-2 self-start">
+                            {customer.outstanding_balance > 0 && (
+                                <Badge variant="destructive" className="text-sm">
+                                    {t('customers.outstanding_balance')}:{' '}
+                                    {formatCurrency(customer.outstanding_balance)}
+                                </Badge>
+                            )}
+                            {customer.other_balances.map((balance) => (
+                                <Badge key={balance.currency_id} variant="destructive" className="text-sm">
+                                    {t('customers.outstanding_balance')}:{' '}
+                                    {formatCurrency(balance.amount, balance.currency_id)}
+                                </Badge>
+                            ))}
+                        </div>
                     )}
                 </div>
 
@@ -475,6 +488,18 @@ export default function CustomerShow({ customer, availableAddresses, creditSales
                             />
                             <InputError message={paymentForm.errors.amount} />
                         </div>
+                        {currency && customer.other_balances.length > 0 && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="payment_currency">{t('currencies.currency')}</Label>
+                                <CurrencySelect
+                                    id="payment_currency"
+                                    value={paymentForm.data.currency_id}
+                                    onValueChange={(value) => paymentForm.setData('currency_id', value)}
+                                    onlyIds={[currency.id, ...customer.other_balances.map((balance) => balance.currency_id)]}
+                                />
+                                <InputError message={paymentForm.errors.currency_id} />
+                            </div>
+                        )}
                         <div className="grid gap-2">
                             <Label>{t('credit.payment_method')}</Label>
                             <Select

@@ -7,3 +7,10 @@ export type Currency = {
     round_digits: number;
     is_active: boolean;
 };
+
+export type CurrentStation = {
+    id: number;
+    name: string;
+    business_id: number;
+    currency: Currency;
+};

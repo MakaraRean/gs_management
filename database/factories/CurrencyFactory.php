@@ -3,8 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Currency;
-use App\Models\Station;
-use App\Models\Tank;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,7 +18,7 @@ class CurrencyFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => strtoupper(fake()->unique()->lexify('???')),
+            'code' => 'X'.strtoupper(fake()->unique()->lexify('??')),
             'name' => fake()->word(),
             'name_km' => fake()->word(),
             'symbol' => fake()->randomElement(['$', '€', '£', '¥']),
@@ -62,25 +60,5 @@ class CurrencyFactory extends Factory
     public static function seeded(string $code): Currency
     {
         return Currency::query()->where('code', $code)->firstOrFail();
-    }
-
-    /**
-     * The currency a new record of this station is stamped with: its own, else its business's, else USD.
-     */
-    public static function idForStation(?int $stationId): int
-    {
-        $station = $stationId
-            ? Station::query()->withInactive()->with(['currency', 'business.currency'])->find($stationId)
-            : null;
-
-        return ($station?->effective_currency ?? self::seeded('USD'))->id;
-    }
-
-    /**
-     * The currency a new delivery into this tank is stamped with (that of the tank's station).
-     */
-    public static function idForTank(?int $tankId): int
-    {
-        return self::idForStation($tankId ? Tank::query()->withInactive()->find($tankId)?->station_id : null);
     }
 }

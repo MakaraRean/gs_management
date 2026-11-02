@@ -13,13 +13,16 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    /**
+     * Totals the active station's records in its current currency, so no total mixes stations
+     * or currencies; a business without stations shows empty totals.
+     */
     public function index(Request $request): Response
     {
         if (! $request->user()->business_id) {
             return Inertia::render('dashboard/locked');
         }
 
-        // A business whose stations are all gone has nothing to total yet.
         if (! app()->bound('current.station')) {
             return Inertia::render('dashboard', [
                 'stats' => ['today_revenue' => 0, 'today_volume' => 0, 'today_transactions' => 0, 'net_cash' => 0],
@@ -33,19 +36,14 @@ class DashboardController extends Controller
         $currency = $this->currentCurrency();
         $today = LocalTime::today();
 
-        // Everything is the active station's, in its current currency, so no total mixes currencies.
-        $sales = fn () => Sale::query()->where('station_id', $station->id)->inCurrency($currency);
+        $sales = fn () => Sale::query()->inStationCurrency($station, $currency);
 
         $todaySales = $sales()->whereBetween('sold_at', LocalTime::dayRange($today, $today));
 
         $cashSales = (float) $sales()->where('payment_method', 'cash')->sum('total_amount');
-        $deliveries = (float) FuelDelivery::query()
-            ->whereHas('tank', fn ($query) => $query->where('station_id', $station->id))
-            ->inCurrency($currency)
-            ->sum('total_cost');
+        $deliveries = (float) FuelDelivery::query()->inStationCurrency($station, $currency)->sum('total_cost');
         $manualCashFlows = fn (string $direction) => (float) CashFlow::query()
-            ->where('station_id', $station->id)
-            ->inCurrency($currency)
+            ->inStationCurrency($station, $currency)
             ->where('direction', $direction)
             ->sum('amount');
         $manualIn = $manualCashFlows('in');

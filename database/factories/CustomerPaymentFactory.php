@@ -14,12 +14,14 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class CustomerPaymentFactory extends Factory
 {
     /**
-     * Stamp the payment with its station's currency unless a test sets one.
+     * Records with a station are stamped with its currency when saved; stationless ones get USD.
      */
     public function configure(): static
     {
         return $this->afterMaking(function (CustomerPayment $payment): void {
-            $payment->currency_id ??= CurrencyFactory::idForStation($payment->station_id);
+            if ($payment->station_id === null) {
+                $payment->currency_id ??= CurrencyFactory::seeded('USD')->id;
+            }
         });
     }
 

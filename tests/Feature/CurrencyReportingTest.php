@@ -261,7 +261,7 @@ class CurrencyReportingTest extends TestCase
                 ->where('requests.0.amount', self::amount(4500.0)));
     }
 
-    public function test_every_role_that_can_open_reports_stays_scoped_to_its_station(): void
+    public function test_a_non_owner_admin_gets_reports_scoped_to_the_station(): void
     {
         $this->seedSalesToIgnore();
         $admin = User::factory()->create(['business_id' => $this->business->id, 'role' => Role::Admin]);
@@ -270,5 +270,73 @@ class CurrencyReportingTest extends TestCase
             ->withUnencryptedCookie('station_id', $this->usdStation->id)
             ->get(route('reports.index', ['type' => 'daily_sales']))
             ->assertInertia(fn ($page) => $page->where('report.totals.revenue', self::amount(100.0)));
+    }
+
+    public function test_a_cashier_gets_sales_analysis_scoped_to_the_station(): void
+    {
+        $this->seedSalesToIgnore();
+        $cashier = User::factory()->cashier()->create(['business_id' => $this->business->id]);
+
+        $this->actingAs($cashier)
+            ->withUnencryptedCookie('station_id', $this->usdStation->id)
+            ->get(route('analytics.index'))
+            ->assertInertia(fn ($page) => $page->where('totals.revenue', self::amount(100.0)));
+    }
+
+    public function test_deliveries_into_a_deactivated_tank_still_count(): void
+    {
+        $tank = Tank::factory()->create(['station_id' => $this->usdStation->id]);
+        FuelDelivery::factory()->create(['tank_id' => $tank->id, 'total_cost' => 30, 'delivered_at' => now()]);
+        $tank->deactivate();
+
+        $this->actingAtStation($this->usdStation)
+            ->get(route('dashboard'))
+            ->assertInertia(fn ($page) => $page->where('stats.net_cash', self::amount(-30.0)));
+        $this->actingAtStation($this->usdStation)
+            ->get(route('reports.index', ['type' => 'cash_flow']))
+            ->assertInertia(fn ($page) => $page->where('report.totals.net_cash', self::amount(-30.0)));
+        $this->actingAtStation($this->usdStation)
+            ->get(route('cash-flow.index'))
+            ->assertInertia(fn ($page) => $page->has('entries', 1)->where('summary.total_out', self::amount(30.0)));
+        $this->actingAtStation($this->usdStation)
+            ->get(route('fuel.deliveries.index'))
+            ->assertInertia(fn ($page) => $page->has('deliveries', 1));
+    }
+
+    public function test_a_customer_sees_what_they_owe_in_other_currencies(): void
+    {
+        $customer = Customer::factory()->create(['business_id' => $this->business->id, 'station_id' => null]);
+        $usd = CurrencyFactory::seeded('USD');
+
+        $this->sale($this->usdStation, 300, ['customer_id' => $customer->id, 'payment_method' => 'credit']);
+        $this->sale($this->khrStation, 5000, ['customer_id' => $customer->id, 'payment_method' => 'credit']);
+        CustomerPayment::factory()->create(['customer_id' => $customer->id, 'station_id' => $this->usdStation->id, 'amount' => 100]);
+
+        $this->assertEquals([$usd->id => 200.0, $this->khr->id => 5000.0], $customer->outstandingBalances());
+
+        $this->actingAtStation($this->usdStation)
+            ->get(route('customers.index'))
+            ->assertInertia(fn ($page) => $page
+                ->where('customers.0.outstanding_balance', self::amount(200.0))
+                ->has('customers.0.other_balances', 1)
+                ->where('customers.0.other_balances.0.currency_id', $this->khr->id)
+                ->where('customers.0.other_balances.0.amount', self::amount(5000.0)));
+
+        $this->actingAtStation($this->khrStation)
+            ->get(route('customers.show', $customer))
+            ->assertInertia(fn ($page) => $page
+                ->where('customer.outstanding_balance', self::amount(5000.0))
+                ->where('customer.other_balances.0.currency_id', $usd->id)
+                ->where('customer.other_balances.0.amount', self::amount(200.0)));
+    }
+
+    public function test_a_balance_paid_off_in_its_currency_is_no_longer_listed(): void
+    {
+        $customer = Customer::factory()->create(['business_id' => $this->business->id, 'station_id' => null]);
+
+        $this->sale($this->khrStation, 5000, ['customer_id' => $customer->id, 'payment_method' => 'credit']);
+        CustomerPayment::factory()->create(['customer_id' => $customer->id, 'station_id' => $this->khrStation->id, 'amount' => 5000]);
+
+        $this->assertSame([], $customer->outstandingBalances());
     }
 }

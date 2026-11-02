@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CustomerPaymentRequest;
 use App\Http\Requests\RequestDeletionRequest;
 use App\Models\CashFlow;
+use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\CustomerPayment;
 use App\Support\LocalTime;
@@ -21,13 +22,14 @@ class CustomerPaymentController extends Controller
         $data = $request->validated();
         $paidAt = LocalTime::toUtc($data['paid_at'] ?? null) ?? now();
         $stationId = $this->currentStation()->id;
-        $currencyId = $this->currentCurrency()->id;
+        $currency = isset($data['currency_id']) ? Currency::query()->findOrFail($data['currency_id']) : $this->currentCurrency();
+        $amount = $currency->round($data['amount']);
 
         $customer->payments()->create([
             'user_id' => $request->user()?->id,
             'station_id' => $stationId,
-            'currency_id' => $currencyId,
-            'amount' => $data['amount'],
+            'currency_id' => $currency->id,
+            'amount' => $amount,
             'payment_method' => $data['payment_method'],
             'notes' => $data['notes'] ?? null,
             'paid_at' => $paidAt,
@@ -36,10 +38,10 @@ class CustomerPaymentController extends Controller
         CashFlow::create([
             'user_id' => $request->user()?->id,
             'station_id' => $stationId,
-            'currency_id' => $currencyId,
+            'currency_id' => $currency->id,
             'direction' => 'in',
             'category' => 'credit_payment',
-            'amount' => $data['amount'],
+            'amount' => $amount,
             'description' => __('credit.payment_description', ['customer' => $customer->name]),
             'occurred_at' => $paidAt,
         ]);

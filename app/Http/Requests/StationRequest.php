@@ -3,8 +3,10 @@
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 
 class StationRequest extends FormRequest
 {
@@ -14,6 +16,18 @@ class StationRequest extends FormRequest
     }
 
     /**
+     * An active currency, or the one the station already has so an unrelated edit still saves after it is retired.
+     */
+    private function selectableCurrency(?int $currentCurrencyId): Exists
+    {
+        return Rule::exists('currencies', 'id')->where(
+            fn (Builder $query) => $query->where('is_active', true)->orWhere('id', $currentCurrencyId),
+        );
+    }
+
+    /**
+     * Empty currency_id means the station uses its business's currency.
+     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
@@ -23,8 +37,7 @@ class StationRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string', 'max:1000'],
-            // Empty means the station uses its business's currency.
-            'currency_id' => ['nullable', 'integer', Rule::exists('currencies', 'id')->where('is_active', true)],
+            'currency_id' => ['nullable', 'integer', $this->selectableCurrency($this->route('station')?->currency_id)],
         ];
     }
 }

@@ -49,10 +49,10 @@ class CashFlowController extends Controller
     {
         CashFlow::create([
             ...$request->validated(),
+            'amount' => $this->currentCurrency()->round($request->validated('amount')),
             'occurred_at' => LocalTime::toUtc($request->validated('occurred_at')),
             'user_id' => $request->user()?->id,
             'station_id' => $this->currentStation()->id,
-            'currency_id' => $this->currentCurrency()->id,
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Cash entry recorded.')]);
@@ -95,8 +95,7 @@ class CashFlowController extends Controller
         $range = LocalTime::dayRange($from, $to);
 
         $cashSales = Sale::query()
-            ->where('station_id', $station->id)
-            ->inCurrency($currency)
+            ->inStationCurrency($station, $currency)
             ->where('payment_method', 'cash')
             ->whereBetween('sold_at', $range)
             ->selectRaw(LocalTime::dateSql('sold_at').' as day, SUM(total_amount) as total')
@@ -113,9 +112,8 @@ class CashFlowController extends Controller
             ]);
 
         $deliveries = FuelDelivery::query()
-            ->whereHas('tank', fn ($q) => $q->where('station_id', $station->id))
-            ->inCurrency($currency)
-            ->with('tank:id,name')
+            ->inStationCurrency($station, $currency)
+            ->with(['tank' => fn ($query) => $query->withInactive()->select('id', 'name')])
             ->whereBetween('delivered_at', $range)
             ->get()
             ->map(fn (FuelDelivery $delivery): array => [
@@ -129,8 +127,7 @@ class CashFlowController extends Controller
             ]);
 
         $manual = CashFlow::query()
-            ->where('station_id', $station->id)
-            ->inCurrency($currency)
+            ->inStationCurrency($station, $currency)
             ->whereBetween('occurred_at', $range)
             ->withExists('pendingDeletionRequest as deletion_pending')
             ->get()
